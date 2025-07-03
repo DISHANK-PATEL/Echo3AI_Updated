@@ -33,5 +33,4 @@ Thumbs.db
 # Misc
 *.local
 
-# Do NOT ignore the main app folder
-echo3ai-pod-verse-50/ 
+# Do NOT ignore the main app folder 

@@ -1,0 +1,22 @@
+.video-js {
+  background: #18181b !important;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  border: 2px solid #14b8a6;
+}
+.vjs-theme-dark .vjs-control-bar {
+  background: rgba(24,24,27,0.95) !important;
+  color: #fff;
+}
+.vjs-theme-dark .vjs-slider {
+  background: #222 !important;
+}
+.vjs-theme-dark .vjs-play-progress {
+  background: #14b8a6 !important;
+}
+.vjs-theme-dark .vjs-load-progress {
+  background: #0ea5e9 !important;
+}
+.vjs-theme-dark .vjs-menu-content {
+  background: #18181b !important;
+} 
