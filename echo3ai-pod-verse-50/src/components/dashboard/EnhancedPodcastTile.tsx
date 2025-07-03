@@ -227,7 +227,7 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
             </div>
 
             {/* Action Buttons: Tip, Chat, Fact Check */}
-            <div className="flex justify-between items-center mt-2">
+            <div className="flex flex-col space-y-2 items-stretch mt-2">
               {/* Tip Button */}
               <Button
                 size="sm"
