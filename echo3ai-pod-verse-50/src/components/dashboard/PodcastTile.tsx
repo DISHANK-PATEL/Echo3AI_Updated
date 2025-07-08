@@ -6,6 +6,7 @@ import PodcastActionButtons from './PodcastActionButtons';
 
 interface PodcastTileProps {
   podcast: {
+    _id: string;
     id: number;
     title: string;
     creator: string;
@@ -32,6 +33,13 @@ const PodcastTile: React.FC<PodcastTileProps> = ({ podcast, index }) => {
       'Blockchain': 'from-green-500 to-teal-500',
       'Web3': 'from-orange-500 to-red-500',
       'Crypto': 'from-yellow-500 to-orange-500',
+      'Business': 'from-indigo-500 to-purple-500',
+      'Health': 'from-green-500 to-emerald-500',
+      'Education': 'from-blue-500 to-indigo-500',
+      'Entertainment': 'from-pink-500 to-rose-500',
+      'News': 'from-red-500 to-orange-500',
+      'Sports': 'from-orange-500 to-yellow-500',
+      'Other': 'from-gray-500 to-gray-600',
     };
     return colors[genre as keyof typeof colors] || 'from-gray-500 to-gray-600';
   };

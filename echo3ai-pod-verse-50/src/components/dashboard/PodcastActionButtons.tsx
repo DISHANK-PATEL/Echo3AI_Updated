@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, Search } from 'lucide-react';
+import { FileText, Languages, Search } from 'lucide-react';
 import AISummaryPanel from './AISummaryPanel';
-import LanguageReportModal from './LanguageReportModal';
+import LanguageCheckModal from './LanguageCheckModal';
 import FactCheckBottomSheet from './FactCheckBottomSheet';
 
 interface PodcastActionButtonsProps {
   podcast: {
+    _id: string;
     id: number;
     title: string;
     creator: string;
@@ -49,17 +50,17 @@ const PodcastActionButtons: React.FC<PodcastActionButtonsProps> = ({ podcast, is
           AI Summary
         </Button>
 
-        {/* Language Report Button */}
+        {/* Language Check Button */}
         <Button
           onClick={(e) => {
             e.stopPropagation();
             setShowLanguageModal(true);
           }}
-          aria-label={`Show language safety report for ${podcast.title}`}
-          className="flex items-center px-3 h-8 rounded-lg bg-white/10 hover:bg-teal-400/20 hover:shadow-[0_0_8px_rgba(0,255,255,0.6)] text-white text-sm font-medium transition-all duration-300 cursor-pointer group"
+          aria-label={`Show language analysis for ${podcast.title}`}
+          className="flex items-center px-3 h-8 rounded-lg bg-white/10 hover:bg-blue-400/20 hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] text-white text-sm font-medium transition-all duration-300 cursor-pointer group"
         >
-          <AlertTriangle className="w-4 h-4 mr-2 text-teal-300 group-hover:text-teal-200" />
-          Language Report
+          <Languages className="w-4 h-4 mr-2 text-blue-300 group-hover:text-blue-200" />
+          Language Check
         </Button>
 
         {/* View AI Fact Check Button */}
@@ -83,8 +84,8 @@ const PodcastActionButtons: React.FC<PodcastActionButtonsProps> = ({ podcast, is
         podcast={podcast}
       />
 
-      {/* Language Report Modal */}
-      <LanguageReportModal
+      {/* Language Check Modal */}
+      <LanguageCheckModal
         isOpen={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}
         podcast={podcast}

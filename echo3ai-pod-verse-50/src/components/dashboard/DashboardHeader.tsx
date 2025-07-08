@@ -1,10 +1,23 @@
-
 import React, { useState } from 'react';
-import { Search, Wallet } from 'lucide-react';
+import { Search, Wallet, LogOut } from 'lucide-react';
 import AddPodcastModal from './AddPodcastModal';
+import { useWallet } from '@/hooks/useWallet';
 
 const DashboardHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { isConnected, address, connectWallet, disconnectWallet, isConnecting, error } = useWallet();
+
+  const handleWalletClick = () => {
+    if (isConnected) {
+      disconnectWallet();
+    } else {
+      connectWallet();
+    }
+  };
+
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-gray-800/50">
@@ -42,12 +55,35 @@ const DashboardHeader = () => {
           <div className="flex items-center space-x-4">
             <AddPodcastModal />
             
-            <button className="border border-gray-700/50 hover:border-teal-400/50 text-white hover:text-teal-300 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5 bg-gray-900/30 hover:bg-gray-800/50 flex items-center space-x-2">
-              <Wallet className="w-5 h-5" />
-              <span>Connect Wallet</span>
+            <button 
+              onClick={handleWalletClick}
+              disabled={isConnecting}
+              className={`border border-gray-700/50 hover:border-teal-400/50 text-white hover:text-teal-300 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5 bg-gray-900/30 hover:bg-gray-800/50 flex items-center space-x-2 ${
+                isConnecting ? 'opacity-50 cursor-not-allowed' : ''
+              } ${isConnected ? 'border-green-400/50 text-green-300' : ''}`}
+            >
+              {isConnected ? (
+                <>
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span>{formatAddress(address!)}</span>
+                  <LogOut className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-5 h-5" />
+                  <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
+        
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300 text-sm">
+            {error}
+          </div>
+        )}
       </div>
     </header>
   );

@@ -2,9 +2,24 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useWallet } from '@/hooks/useWallet';
+import InternetIdentityLogin from './InternetIdentityLogin';
 
 const Hero = () => {
   const navigate = useNavigate();
+  const { isConnected, connectWallet, isConnecting, error } = useWallet();
+
+  const handleConnectWallet = () => {
+    if (isConnected) {
+      navigate('/dashboard');
+    } else {
+      connectWallet();
+    }
+  };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-black">
@@ -24,10 +39,13 @@ const Hero = () => {
       </div>
       
       <div className="relative z-10 max-w-4xl mx-auto text-center">
+        <div className="flex justify-center mb-4">
+          <InternetIdentityLogin size={56} />
+        </div>
         <div className="mb-8 animate-fade-in">
-          <div className="inline-flex items-center px-4 py-2 bg-gray-900/80 backdrop-blur-sm rounded-full text-sm text-gray-300 mb-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 transform hover:scale-105">
+          <div className="inline-flex items-center px-8 py-4 bg-gray-900/80 backdrop-blur-sm rounded-full text-lg md:text-2xl text-gray-300 mb-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 transform hover:scale-105 font-bold shadow-lg">
             <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-            Now Live on Internet Computer Protocol
+            Now Live on Ethereum Sepolia Testnet and Internet Computer Protocol
           </div>
         </div>
 
@@ -44,12 +62,15 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in delay-600">
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-1"
-          >
-            Connect Wallet
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              size="lg" 
+              onClick={handleDashboardClick}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-1"
+            >
+              Go to Dashboard
+            </Button>
+          </div>
           <Button 
             variant="ghost" 
             size="lg"
@@ -60,6 +81,16 @@ const Hero = () => {
             <ArrowDown className="ml-2 h-5 w-5" />
           </Button>
         </div>
+        {false && (
+          <div className="mt-2 text-red-400 text-sm">Please log in with Internet Identity to access the dashboard.</div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300 text-sm max-w-md mx-auto animate-fade-in">
+            {error}
+          </div>
+        )}
 
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto text-center animate-fade-in delay-800">
           <div className="transform hover:scale-110 transition-all duration-300 cursor-pointer">

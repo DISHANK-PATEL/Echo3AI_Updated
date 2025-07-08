@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, Play, Users, Clock, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Heart, Play, Users, Clock, MessageCircle, ShieldCheck, Languages } from 'lucide-react';
 import ChatWidget from './ChatWidget';
 import FactCheckAccordion from './FactCheckAccordion';
 import TipModal from './TipModal';
+import LanguageCheckModal from './LanguageCheckModal';
 
 interface TransparentPodcastTileProps {
   podcast: {
+    _id: string;
     id: number;
     title: string;
     creator: string;
@@ -28,6 +29,7 @@ const TransparentPodcastTile: React.FC<TransparentPodcastTileProps> = ({ podcast
   const [showTipModal, setShowTipModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showFactCheck, setShowFactCheck] = useState(false);
+  const [showLanguageCheck, setShowLanguageCheck] = useState(false);
 
   const handleFactCheckClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,6 +47,13 @@ const TransparentPodcastTile: React.FC<TransparentPodcastTileProps> = ({ podcast
       'Blockchain': 'from-green-500 to-teal-500',
       'Web3': 'from-orange-500 to-red-500',
       'Crypto': 'from-yellow-500 to-orange-500',
+      'Business': 'from-indigo-500 to-purple-500',
+      'Health': 'from-green-500 to-emerald-500',
+      'Education': 'from-blue-500 to-indigo-500',
+      'Entertainment': 'from-pink-500 to-rose-500',
+      'News': 'from-red-500 to-orange-500',
+      'Sports': 'from-orange-500 to-yellow-500',
+      'Other': 'from-gray-500 to-gray-600',
     };
     return colors[genre as keyof typeof colors] || 'from-gray-500 to-gray-600';
   };
@@ -139,6 +148,19 @@ const TransparentPodcastTile: React.FC<TransparentPodcastTileProps> = ({ podcast
                 Chat with Me
               </Button>
 
+              {/* Language Check Button - Bottom Center */}
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLanguageCheck(true);
+                }}
+                className="px-3 py-1 h-8 bg-black/30 backdrop-blur-md hover:bg-blue-600/60 text-white border border-blue-400/30 hover:border-blue-400/60 rounded-lg shadow-lg transition-all duration-300 hover:scale-105 transform-gpu hover:shadow-blue-400/50 text-xs font-medium"
+              >
+                <Languages className="w-3 h-3 mr-1" />
+                Language Check
+              </Button>
+
               {/* Fact Check Button - Bottom Right */}
               <Button
                 size="sm"
@@ -226,6 +248,13 @@ const TransparentPodcastTile: React.FC<TransparentPodcastTileProps> = ({ podcast
       <TipModal
         isOpen={showTipModal}
         onClose={() => setShowTipModal(false)}
+        podcast={podcast}
+      />
+
+      {/* Language Check Modal */}
+      <LanguageCheckModal
+        isOpen={showLanguageCheck}
+        onClose={() => setShowLanguageCheck(false)}
         podcast={podcast}
       />
     </>

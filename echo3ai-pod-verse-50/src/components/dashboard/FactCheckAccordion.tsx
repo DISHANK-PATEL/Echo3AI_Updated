@@ -18,18 +18,125 @@ interface FactCheckAccordionProps {
 interface FactCheckSection {
   title: string;
   content: string;
-  sources?: string[];
+  sources?: string[] | boolean;
+}
+
+interface ParsedFactCheckResult {
+  factualVerification: string;
+  motivationAnalysis: string;
+  intentFraming: string;
+  sentimentTone: string;
+  finalVerdict: string;
 }
 
 const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose, podcast }) => {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<'previous' | 'new' | null>(null);
   const [statement, setStatement] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [factCheckResult, setFactCheckResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [parsedResult, setParsedResult] = useState<ParsedFactCheckResult | null>(null);
 
   console.log('FactCheckAccordion render - isOpen:', isOpen, 'showDialog:', showDialog, 'showResults:', showResults);
+
+  // Parse the Gemini response into structured sections
+  const parseFactCheckResponse = (report: string): ParsedFactCheckResult => {
+    const sections = {
+      factualVerification: '',
+      motivationAnalysis: '',
+      intentFraming: '',
+      sentimentTone: '',
+      finalVerdict: ''
+    };
+
+    // More flexible regex patterns to match different formats
+    const patterns = {
+      factualVerification: /(?:1\.?\s*)?\*\*Factual Verification\*\*:?\s*(.*?)(?=\n\s*(?:2\.?\s*)?\*\*|$)/is,
+      motivationAnalysis: /(?:2\.?\s*)?\*\*Motivation & Benefit Analysis\*\*:?\s*(.*?)(?=\n\s*(?:3\.?\s*)?\*\*|$)/is,
+      intentFraming: /(?:3\.?\s*)?\*\*Intent & Framing\*\*:?\s*(.*?)(?=\n\s*(?:4\.?\s*)?\*\*|$)/is,
+      sentimentTone: /(?:4\.?\s*)?\*\*Sentiment & Tone\*\*:?\s*(.*?)(?=\n\s*(?:5\.?\s*)?\*\*|$)/is,
+      finalVerdict: /(?:5\.?\s*)?\*\*Final Verdict\*\*:?\s*(.*?)(?=\n\s*(?:6\.?\s*)?\*\*|$)/is
+    };
+
+    // Extract each section using regex
+    Object.entries(patterns).forEach(([key, pattern]) => {
+      const match = report.match(pattern);
+      if (match && match[1]) {
+        sections[key as keyof ParsedFactCheckResult] = match[1].trim();
+      }
+    });
+
+    // Fallback: if regex fails, try simple text splitting
+    if (!sections.factualVerification && !sections.motivationAnalysis) {
+      console.log('Regex parsing failed, trying fallback method');
+      
+      const lines = report.split('\n');
+      let currentSection = '';
+      let currentContent = '';
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        if (trimmedLine.includes('Factual Verification')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          currentSection = 'factualVerification';
+          currentContent = trimmedLine.replace(/.*Factual Verification.*?:?\s*/, '');
+        } else if (trimmedLine.includes('Motivation & Benefit Analysis')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          currentSection = 'motivationAnalysis';
+          currentContent = trimmedLine.replace(/.*Motivation & Benefit Analysis.*?:?\s*/, '');
+        } else if (trimmedLine.includes('Intent & Framing')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          currentSection = 'intentFraming';
+          currentContent = trimmedLine.replace(/.*Intent & Framing.*?:?\s*/, '');
+        } else if (trimmedLine.includes('Sentiment & Tone')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          currentSection = 'sentimentTone';
+          currentContent = trimmedLine.replace(/.*Sentiment & Tone.*?:?\s*/, '');
+        } else if (trimmedLine.includes('Final Verdict')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          currentSection = 'finalVerdict';
+          currentContent = trimmedLine.replace(/.*Final Verdict.*?:?\s*/, '');
+        } else if (trimmedLine.includes('Resource List')) {
+          if (currentSection && currentContent) {
+            sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+          }
+          break;
+        } else if (currentSection && trimmedLine) {
+          currentContent += ' ' + trimmedLine;
+        }
+      }
+
+      // Add the last section
+      if (currentSection && currentContent) {
+        sections[currentSection as keyof ParsedFactCheckResult] = currentContent.trim();
+      }
+    }
+
+    // Debug logging
+    console.log('Parsed sections:', sections);
+    console.log('Raw report:', report);
+    
+    // If no sections were parsed, try a simpler approach
+    if (!sections.factualVerification && !sections.motivationAnalysis && !sections.intentFraming && !sections.sentimentTone && !sections.finalVerdict) {
+      console.log('All parsing methods failed, using raw report');
+      sections.factualVerification = report;
+    }
+    
+    return sections;
+  };
 
   const toggleSection = (section: string) => {
     const newOpenSections = new Set(openSections);
@@ -46,14 +153,7 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
     setShowDialog(true);
   };
 
-  const handleOptionSelect = (option: 'previous' | 'new') => {
-    console.log('Option selected:', option);
-    setSelectedOption(option);
-    if (option === 'previous') {
-      setShowResults(true);
-      setShowDialog(false);
-    }
-  };
+
 
   const handleSubmitStatement = async () => {
     if (!statement.trim()) return;
@@ -62,12 +162,39 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
     setIsGenerating(true);
     setShowDialog(false);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      console.log('Analysis complete');
+    try {
+      const response = await fetch('http://localhost:5001/api/fact-check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ statement: statement.trim() }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('Fact-check analysis complete:', result.result);
+        setFactCheckResult(result.result);
+        
+        // Parse the report into structured sections
+        if (result.result.report) {
+          const parsed = parseFactCheckResponse(result.result.report);
+          setParsedResult(parsed);
+        }
+        
+        setIsGenerating(false);
+        setShowResults(true);
+      } else {
+        console.error('Fact-check failed:', result.error);
+        setError(result.error || 'Fact-check failed');
+        setIsGenerating(false);
+      }
+    } catch (err) {
+      console.error('Fact-check error:', err);
+      setError('Failed to perform fact-check. Please try again.');
       setIsGenerating(false);
-      setShowResults(true);
-    }, 2000);
+    }
   };
 
   // React to isOpen prop changes
@@ -78,51 +205,42 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
     } else {
       setShowDialog(false);
       setShowResults(false);
-      setSelectedOption(null);
       setStatement('');
+      setFactCheckResult(null);
+      setParsedResult(null);
+      setError(null);
     }
   }, [isOpen]);
 
   const factCheckData: Record<string, FactCheckSection> = {
     'factual-verification': {
-      title: 'Factual Verification',
-      content: selectedOption === 'new' && statement 
-        ? `Analysis of statement: "${statement}". Cross-referenced with multiple sources. 2 out of 3 key claims are factually accurate according to recent studies.`
-        : 'Claims made about AI technology adoption rates have been cross-referenced with industry reports. 3 out of 5 statistics mentioned are accurate according to recent studies.',
+      title: '1. Factual Verification',
+      content: parsedResult?.factualVerification || (factCheckResult?.report ? 'Raw Analysis: ' + factCheckResult.report.substring(0, 200) + '...' : 'No analysis available yet.'),
     },
     'motivation-analysis': {
-      title: 'Motivation & Benefit Analysis',
-      content: selectedOption === 'new' && statement
-        ? 'The submitted statement appears to be informational in nature with neutral intent. No apparent bias or commercial motivation detected.'
-        : 'The discussion appears to be educational in nature, with the host presenting balanced viewpoints on emerging technologies. No apparent commercial bias detected.',
+      title: '2. Motivation & Benefit Analysis',
+      content: parsedResult?.motivationAnalysis || 'No analysis available yet.',
     },
     'intent-framing': {
-      title: 'Intent & Framing',
-      content: selectedOption === 'new' && statement
-        ? 'Statement is framed as factual assertion. Context suggests informational purpose with objective presentation.'
-        : 'Content is framed as informational and exploratory. The conversation maintains objectivity while discussing both opportunities and challenges.',
+      title: '3. Intent & Framing',
+      content: parsedResult?.intentFraming || 'No analysis available yet.',
     },
     'sentiment-tone': {
-      title: 'Sentiment & Tone',
-      content: selectedOption === 'new' && statement
-        ? 'Sentiment analysis shows 60% neutral, 30% positive, 10% cautionary language patterns in the submitted statement.'
-        : 'Overall tone is optimistic yet cautious. Sentiment analysis shows 70% positive, 20% neutral, 10% cautionary language patterns.',
+      title: '4. Sentiment & Tone',
+      content: parsedResult?.sentimentTone || 'No analysis available yet.',
     },
     'final-verdict': {
-      title: 'Final Verdict',
-      content: selectedOption === 'new' && statement
-        ? `Taking the data into consideration, I conclude that: The submitted statement "${statement}" contains mostly accurate information with minor factual discrepancies that require verification.`
-        : 'Taking the data into consideration, I conclude that: This episode presents a well-balanced discussion of emerging technologies with mostly accurate information and professional presentation.',
+      title: '5. Final Verdict',
+      content: parsedResult?.finalVerdict || 'No analysis available yet.',
     },
     'evidence-sources': {
       title: '🔗 Evidence Sources',
       content: '',
-      sources: [
-        'https://techreport.ai/adoption-metrics-2024',
-        'https://industry.gov/tech-trends-analysis',
-        'https://research.mit.edu/ai-impact-study',
-        'https://factcheck.org/verification-database'
-      ]
+      sources: factCheckResult?.evidence ? true : false
+    },
+    'debug-raw': {
+      title: '🔧 Debug - Raw Response',
+      content: factCheckResult?.report || 'No raw response available.',
     }
   };
 
@@ -145,54 +263,41 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
             <DialogTitle className="text-teal-300">Echo3AI Fact Check</DialogTitle>
           </DialogHeader>
           
-          {!selectedOption && (
-            <div className="space-y-4">
-              <p className="text-gray-300 text-sm">Choose an option:</p>
-              <div className="space-y-3">
-                <Button
-                  onClick={() => handleOptionSelect('previous')}
-                  className="w-full bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white"
-                >
-                  1. View Previous Fact Check Reports
-                </Button>
-                <Button
-                  onClick={() => handleOptionSelect('new')}
-                  className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white"
-                >
-                  2. Do a Fact Check Now
-                </Button>
+          <div className="space-y-4">
+            <p className="text-gray-300 text-sm">Enter a statement to fact-check:</p>
+            {error && (
+              <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-300 text-sm">{error}</p>
               </div>
+            )}
+            <Textarea
+              value={statement}
+              onChange={(e) => setStatement(e.target.value)}
+              placeholder="Enter your statement here..."
+              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSubmitStatement}
+                disabled={!statement.trim() || isGenerating}
+                className="flex-1 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
+              >
+                {isGenerating ? 'Analyzing...' : 'Submit for Analysis'}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowDialog(false);
+                  setError(null);
+                  onClose();
+                }}
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
+                Cancel
+              </Button>
             </div>
-          )}
-
-          {selectedOption === 'new' && (
-            <div className="space-y-4">
-              <p className="text-gray-300 text-sm">Enter a statement to fact-check:</p>
-              <Textarea
-                value={statement}
-                onChange={(e) => setStatement(e.target.value)}
-                placeholder="Enter your statement here..."
-                className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                rows={4}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSubmitStatement}
-                  disabled={!statement.trim() || isGenerating}
-                  className="flex-1 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
-                >
-                  {isGenerating ? 'Analyzing...' : 'Submit for Analysis'}
-                </Button>
-                <Button
-                  onClick={() => setSelectedOption(null)}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  Back
-                </Button>
-              </div>
-            </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -234,14 +339,16 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
             <div>
               <h3 className="text-teal-300 font-bold text-lg">Echo3AI Fact Check Analysis</h3>
               <p className="text-gray-400 text-sm mt-1">
-                {selectedOption === 'new' && statement ? 'Custom Statement Analysis' : podcast.title}
+                {statement ? 'Custom Statement Analysis' : podcast.title}
               </p>
             </div>
             <Button
               onClick={() => {
                 setShowResults(false);
-                setSelectedOption(null);
                 setStatement('');
+                setFactCheckResult(null);
+                setParsedResult(null);
+                setError(null);
                 onClose();
               }}
               size="sm"
@@ -261,7 +368,11 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
                     onClick={() => toggleSection(key)}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-teal-400/5 transition-colors duration-200 group"
                   >
-                    <span className="text-white font-medium group-hover:text-teal-300 transition-colors duration-200">
+                    <span className={`font-medium transition-colors duration-200 ${
+                      key === 'final-verdict' 
+                        ? 'text-green-300 group-hover:text-green-200' 
+                        : 'text-white group-hover:text-teal-300'
+                    }`}>
                       {section.title}
                     </span>
                     {openSections.has(key) ? (
@@ -273,26 +384,42 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
                   
                   {openSections.has(key) && (
                     <div className="px-4 pb-4 pt-2 bg-gray-900/30 animate-accordion-down">
-                      <div className="border-l-2 border-teal-400/30 pl-4">
+                      <div className={`border-l-2 pl-4 ${
+                        key === 'final-verdict' 
+                          ? 'border-green-400/50 bg-green-400/5' 
+                          : 'border-teal-400/30'
+                      }`}>
                         {section.content && (
                           <p className="text-gray-300 text-sm leading-relaxed mb-3">
                             {section.content}
                           </p>
                         )}
                         
-                        {section.sources && (
-                          <div className="space-y-2">
-                            {section.sources.map((source, index) => (
-                              <a
-                                key={index}
-                                href={source}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center text-teal-400 hover:text-teal-300 text-sm transition-colors duration-200 group"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                                <span className="truncate">{source}</span>
-                              </a>
+                        {section.sources && typeof section.sources === 'boolean' && factCheckResult?.evidence && (
+                          <div className="space-y-4">
+                            {factCheckResult.evidence.map((item: any, index: number) => (
+                              <div key={index} className="border-l-2 border-teal-400/30 pl-3">
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center text-teal-400 hover:text-teal-300 text-sm font-medium transition-colors duration-200 group mb-2"
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                                  <span className="truncate">{item.title || item.link}</span>
+                                </a>
+                                <div className="text-gray-400 text-xs leading-relaxed">
+                                  {item.snippet ? (
+                                    item.snippet.split('\n').slice(0, 4).map((line: string, lineIndex: number) => (
+                                      <p key={lineIndex} className="mb-1">
+                                        {line.trim()}
+                                      </p>
+                                    ))
+                                  ) : (
+                                    <p className="text-gray-500 italic">No content available</p>
+                                  )}
+                                </div>
+                              </div>
                             ))}
                           </div>
                         )}

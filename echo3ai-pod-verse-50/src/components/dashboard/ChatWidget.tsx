@@ -1,53 +1,189 @@
 
 import React, { useState } from 'react';
-import { X, MessageCircle, Send } from 'lucide-react';
+import { X, MessageCircle, Send, Loader2 } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 
 interface ChatWidgetProps {
   isOpen: boolean;
   onClose: () => void;
   podcast: {
+    _id: string;
     id: number;
     title: string;
     creator: string;
+    guest: string;
   };
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose, podcast }) => {
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'Echo3AI',
-      content: `Hi! I'm here to chat about "${podcast.title}". What would you like to know?`,
-      timestamp: new Date().toLocaleTimeString(),
-    }
-  ]);
+  const [messages, setMessages] = useState<Array<{
+    id: number;
+    sender: string;
+    content: string;
+    timestamp: string;
+  }>>([]);
+  const [transcript, setTranscript] = useState<string>('');
+  const [creator, setCreator] = useState<string>('');
+  const [guest, setGuest] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // Initialize chat with transcript
+  React.useEffect(() => {
+    if (isOpen && !isInitialized) {
+      initializeChat();
+    }
+  }, [isOpen, isInitialized]);
+
+  const initializeChat = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch transcript from MongoDB
+      const response = await fetch(`http://localhost:5001/api/podcasts/${podcast._id}/transcript`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setTranscript(result.transcript);
+        setCreator(result.creator || '');
+        setGuest(result.guest || '');
+        
+        // Create a personalized welcome message
+        const welcomeMessage = result.transcript 
+          ? `Hi! I'm Echo3AI, your podcast assistant. I'm here to chat about "${podcast.title}" with ${result.creator || 'the host'}${result.guest ? ` and ${result.guest}` : ''}. I have access to the full transcript and can answer any questions you have about this episode. What would you like to know?`
+          : `Hi! I'm Echo3AI, your podcast assistant. I'm here to chat about "${podcast.title}" with ${result.creator || 'the host'}${result.guest ? ` and ${result.guest}` : ''}. Unfortunately, no transcript is available for this podcast yet.`;
+        
+        setMessages([
+          {
+            id: 1,
+            sender: 'Echo3AI',
+            content: welcomeMessage,
+            timestamp: new Date().toLocaleTimeString(),
+          }
+        ]);
+      } else {
+        setMessages([
+          {
+            id: 1,
+            sender: 'Echo3AI',
+            content: `Hi! I'm Echo3AI, your podcast assistant. I'm here to chat about "${podcast.title}" with ${result.creator || 'the host'}${result.guest ? ` and ${result.guest}` : ''}. Unfortunately, I couldn't load the transcript for this podcast.`,
+            timestamp: new Date().toLocaleTimeString(),
+          }
+        ]);
+      }
+      
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize chat:', error);
+      setMessages([
+        {
+          id: 1,
+          sender: 'Echo3AI',
+          content: `Hi! I'm Echo3AI, your podcast assistant. I'm here to chat about "${podcast.title}" with ${podcast.creator || 'the host'}${podcast.guest ? ` and ${podcast.guest}` : ''}. Sorry, I'm having trouble loading the transcript right now.`,
+          timestamp: new Date().toLocaleTimeString(),
+        }
+      ]);
+      setIsInitialized(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      const newMessage = {
+    if (message.trim() && transcript) {
+      const userMessage = {
         id: messages.length + 1,
         sender: 'You',
         content: message,
         timestamp: new Date().toLocaleTimeString(),
       };
-      setMessages([...messages, newMessage]);
-      setMessage('');
       
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponse = {
+      setMessages(prev => [...prev, userMessage]);
+      const currentMessage = message;
+      setMessage('');
+      setIsLoading(true);
+      
+      try {
+        // Send to chat API
+        const response = await fetch('http://localhost:5001/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+                  body: JSON.stringify({
+          transcript: transcript,
+          question: currentMessage,
+          creator: creator,
+          guest: guest
+        }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          const aiResponse = {
+            id: messages.length + 2,
+            sender: 'Echo3AI',
+            content: result.answer,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          setMessages(prev => [...prev, aiResponse]);
+        } else {
+          const errorResponse = {
+            id: messages.length + 2,
+            sender: 'Echo3AI',
+            content: `Sorry, I encountered an error: ${result.error}`,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          setMessages(prev => [...prev, errorResponse]);
+        }
+      } catch (error) {
+        console.error('Chat error:', error);
+        const errorResponse = {
           id: messages.length + 2,
           sender: 'Echo3AI',
-          content: 'That\'s a great question! Let me analyze that episode segment for you...',
+          content: 'Sorry, I\'m having trouble responding right now. Please try again later.',
           timestamp: new Date().toLocaleTimeString(),
         };
-        setMessages(prev => [...prev, aiResponse]);
-      }, 1000);
+        setMessages(prev => [...prev, errorResponse]);
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (message.trim() && !transcript) {
+      // Handle case when no transcript is available
+      const userMessage = {
+        id: messages.length + 1,
+        sender: 'You',
+        content: message,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
+      setMessage('');
+      
+      const noTranscriptResponse = {
+        id: messages.length + 2,
+        sender: 'Echo3AI',
+        content: 'I don\'t have access to the transcript for this podcast, so I can\'t answer specific questions about its content. Please try again when a transcript is available.',
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages(prev => [...prev, noTranscriptResponse]);
     }
   };
+
+  // Reset chat when closed
+  React.useEffect(() => {
+    if (!isOpen) {
+      setMessages([]);
+      setTranscript('');
+      setCreator('');
+      setGuest('');
+      setIsInitialized(false);
+      setIsLoading(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -103,6 +239,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose, podcast }) => 
                 </div>
               </div>
             ))}
+            
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-800/60 text-white rounded-2xl rounded-bl-md px-3 py-2">
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">Echo3AI is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input Area */}

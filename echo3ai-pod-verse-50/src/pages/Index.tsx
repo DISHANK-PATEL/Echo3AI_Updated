@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Hero from '../components/Hero';
 import PodcastUpload from '../components/PodcastUpload';
@@ -12,7 +11,7 @@ import PodcastVisuals from '../components/PodcastVisuals';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden text-lg md:text-xl p-8 md:p-16">
       <PodcastVisuals />
       <div className="relative z-10">
         <Hero />

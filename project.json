@@ -1,0 +1,27 @@
+{
+  "name": "Echo3AI",
+  "tagline": "Decentralised AI Podcast Platform",
+  "description": "A decentralized podcast platform powered by AI that enables users to upload, transcribe, and fact-check podcast content. Features include IPFS storage, AI-powered fact checking using DuckDuckGo and Gemini, language analysis, chat functionality with podcast transcripts, and tipping system with blockchain integration. Built with React, Node.js, MongoDB, and Web3 technologies.",
+  "team": [
+    {
+      "name": "Dishank Patel",
+      "email": "dishankpatel16082003@gmail.com"
+    }
+  ],
+  "demo_url": "https://echo3ai.vercel.app",
+  "video_url": "https://youtu.be/0_5MXcknC14",
+  "technologies": [
+    "React",
+    "TypeScript",
+    "Node.js",
+    "MongoDB",
+    "IPFS",
+    "Ethers.js",
+    "Polygon",
+    "Tailwind CSS",
+    "Video.js",
+    "Gemini AI",
+    "DuckDuckGo API",
+    "Whisper AI"
+  ]
+} 

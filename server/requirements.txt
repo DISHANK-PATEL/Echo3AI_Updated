@@ -1,0 +1,7 @@
+# Echo3AI Transcription Python Requirements
+# Whisper for AI transcription
+openai-whisper==20231117
+# PyTorch (required by Whisper)
+torch>=1.9.0
+# Numpy (required by Whisper)
+numpy>=1.21.0 
