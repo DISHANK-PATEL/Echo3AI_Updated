@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Search, Wallet, LogOut } from 'lucide-react';
 import AddPodcastModal from './AddPodcastModal';
 import { useWallet } from '@/hooks/useWallet';
+import InternetIdentityLogin from '../InternetIdentityLogin';
+import metamaskLogo from '../../assets/metamask.svg';
+import walletconnectLogo from '../../assets/walletconnect.svg';
 
 const DashboardHeader = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,23 +61,30 @@ const DashboardHeader = () => {
             <button 
               onClick={handleWalletClick}
               disabled={isConnecting}
-              className={`border border-gray-700/50 hover:border-teal-400/50 text-white hover:text-teal-300 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5 bg-gray-900/30 hover:bg-gray-800/50 flex items-center space-x-2 ${
+              className={`relative border border-gray-700/50 hover:border-teal-400/50 text-white hover:text-teal-300 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5 bg-gray-900/30 hover:bg-gray-800/50 flex items-center space-x-2 ${
                 isConnecting ? 'opacity-50 cursor-not-allowed' : ''
               } ${isConnected ? 'border-green-400/50 text-green-300' : ''}`}
             >
               {isConnected ? (
                 <>
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span>{formatAddress(address!)}</span>
+                  <span className="relative group">
+                    {formatAddress(address!)}
+                    <span className="absolute left-1/2 -translate-x-1/2 mt-8 bg-gray-900 text-white text-xs rounded px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg border border-gray-700">
+                      {address}
+                    </span>
+                  </span>
                   <LogOut className="w-4 h-4" />
                 </>
               ) : (
                 <>
-                  <Wallet className="w-5 h-5" />
+                  <img src={metamaskLogo} alt="Metamask" className="w-6 h-6" />
+                  <img src={walletconnectLogo} alt="WalletConnect" className="w-6 h-6 ml-1" />
                   <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
                 </>
               )}
             </button>
+            <InternetIdentityLogin size={28} />
           </div>
         </div>
         
