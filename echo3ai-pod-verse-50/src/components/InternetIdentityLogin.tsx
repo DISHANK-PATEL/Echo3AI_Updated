@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AuthClient } from "@dfinity/auth-client";
+// import { AuthClient } from "@dfinity/auth-client";
 
 interface Props {
   onAuthChange?: (isAuthenticated: boolean, principal?: string) => void;
@@ -12,44 +12,76 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AuthClient.create().then((authClient) => {
-      authClient.isAuthenticated().then((auth) => {
-        setIsAuthenticated(auth);
-        if (auth) {
-          setPrincipal(authClient.getIdentity().getPrincipal().toText());
-        }
-        setLoading(false);
-        if (onAuthChange) onAuthChange(auth, auth ? authClient.getIdentity().getPrincipal().toText() : undefined);
-      });
-    });
+    // Check authentication status from backend
+    checkAuthStatus();
   }, [onAuthChange]);
 
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch("/auth/status", {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.walletType === 'icp') {
+          setIsAuthenticated(true);
+          setPrincipal(data.accountId);
+          if (onAuthChange) onAuthChange(true, data.accountId);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async () => {
-    const authClient = await AuthClient.create();
-    await authClient.login({
-      identityProvider: "https://identity.ic0.app/#authorize",
-      onSuccess: async () => {
-        setIsAuthenticated(true);
-        const principalText = authClient.getIdentity().getPrincipal().toText();
-        setPrincipal(principalText);
+    try {
+      // For now, we'll use a simple prompt for the principal
+      // In a real implementation, you'd integrate with Internet Identity
+      const principalText = prompt("Enter your Internet Identity Principal:");
+      
+      if (principalText) {
         // Send principal to backend
-        await fetch("/auth/icp", {
+        const response = await fetch("/auth/icp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ principal: principalText }),
         });
-        if (onAuthChange) onAuthChange(true, principalText);
-      },
-    });
+
+        if (response.ok) {
+          setIsAuthenticated(true);
+          setPrincipal(principalText);
+          if (onAuthChange) onAuthChange(true, principalText);
+        } else {
+          alert("Login failed. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Login failed. Please try again.");
+    }
   };
 
   const logout = async () => {
-    const authClient = await AuthClient.create();
-    await authClient.logout();
-    setIsAuthenticated(false);
-    setPrincipal(null);
-    if (onAuthChange) onAuthChange(false);
+    try {
+      const response = await fetch("/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(false);
+        setPrincipal(null);
+        if (onAuthChange) onAuthChange(false);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   if (loading) return <button disabled>Loading...</button>;

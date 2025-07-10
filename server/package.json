@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest",
-    "deploy:contract": "npx hardhat run scripts/deploy.js --network sepolia"
+    "test": "jest"
   },
   "keywords": [
     "ethereum",
@@ -37,8 +36,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "hardhat": "^2.19.0",
+
     "jest": "^29.7.0",
     "nodemon": "^3.0.1",
     "supertest": "^6.3.3"

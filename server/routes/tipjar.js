@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+// const { body, validationResult } = require('express-validator');
 const ethereumManager = require('../config/ethereum');
 const TipJarContract = require('../contracts/TipJarContract');
 const logger = require('../utils/logger');
@@ -14,21 +14,34 @@ const Podcast = require('../models/Podcast');
  * @desc    Send a tip to a podcaster using Ethereum
  * @access  Private
  */
-router.post('/tip', [
-  body('recipientAddress').isEthereumAddress().withMessage('Invalid recipient address'),
-  body('amount').isFloat({ min: 0.001 }).withMessage('Amount must be at least 0.001 ETH'),
-  body('message').optional().isString().withMessage('Message must be a string')
-], async (req, res) => {
+router.post('/tip', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Basic validation without express-validator
+    const { recipientAddress, amount, message = '' } = req.body;
+    
+    if (!recipientAddress || !amount) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Recipient address and amount are required'
       });
     }
-
-    const { recipientAddress, amount, message = '' } = req.body;
+    
+    // Basic Ethereum address validation
+    if (!/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid recipient address format'
+      });
+    }
+    
+    // Basic amount validation
+    const amountFloat = parseFloat(amount);
+    if (isNaN(amountFloat) || amountFloat < 0.001) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be at least 0.001 ETH'
+      });
+    }
     const senderAddress = req.session.accountId;
 
     if (!senderAddress) {
@@ -169,7 +182,7 @@ router.get('/balance/:address', async (req, res) => {
     const { address } = req.params;
 
     // Validate Ethereum address
-    if (!ethers.isAddress(address)) {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid Ethereum address'
@@ -222,7 +235,7 @@ router.get('/history/:address', async (req, res) => {
     const { limit = 50, offset = 0 } = req.query;
 
     // Validate Ethereum address
-    if (!ethers.isAddress(address)) {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid Ethereum address'
@@ -340,21 +353,26 @@ router.get('/contract-info', async (req, res) => {
  * @desc    Validate tip request and get recipient address
  * @access  Private
  */
-router.post('/tip-podcaster/validate', [
-  body('podcastId').isMongoId().withMessage('Invalid podcast ID'),
-  body('amount').isFloat({ min: 0.001 }).withMessage('Amount must be at least 0.001 ETH'),
-  body('message').optional().isString().withMessage('Message must be a string')
-], async (req, res) => {
+router.post('/tip-podcaster/validate', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Basic validation without express-validator
+    const { podcastId, amount, message = '' } = req.body;
+    
+    if (!podcastId || !amount) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Podcast ID and amount are required'
       });
     }
-
-    const { podcastId, amount, message = '' } = req.body;
+    
+    // Basic amount validation
+    const amountFloat = parseFloat(amount);
+    if (isNaN(amountFloat) || amountFloat < 0.001) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be at least 0.001 ETH'
+      });
+    }
     const senderAddress = req.session.accountId;
 
     if (!senderAddress) {
@@ -421,23 +439,34 @@ router.post('/tip-podcaster/validate', [
  * @desc    Record a completed tip transaction
  * @access  Private
  */
-router.post('/tip-podcaster/record', [
-  body('podcastId').isMongoId().withMessage('Invalid podcast ID'),
-  body('amount').isFloat({ min: 0.001 }).withMessage('Amount must be at least 0.001 ETH'),
-  body('message').optional().isString().withMessage('Message must be a string'),
-  body('transactionHash').isString().notEmpty().withMessage('Transaction hash is required'),
-  body('recipientAddress').isEthereumAddress().withMessage('Invalid recipient address')
-], async (req, res) => {
+router.post('/tip-podcaster/record', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Basic validation without express-validator
+    const { podcastId, amount, message, transactionHash, recipientAddress } = req.body;
+    
+    if (!podcastId || !amount || !transactionHash || !recipientAddress) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Podcast ID, amount, transaction hash, and recipient address are required'
       });
     }
-
-    const { podcastId, amount, message, transactionHash, recipientAddress } = req.body;
+    
+    // Basic amount validation
+    const amountFloat = parseFloat(amount);
+    if (isNaN(amountFloat) || amountFloat < 0.001) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be at least 0.001 ETH'
+      });
+    }
+    
+    // Basic Ethereum address validation
+    if (!/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid recipient address format'
+      });
+    }
     const senderAddress = req.session.accountId;
 
     if (!senderAddress) {
@@ -499,21 +528,26 @@ router.post('/tip-podcaster/record', [
  * @desc    Send a tip to a podcaster using podcast ID (legacy - now handled client-side)
  * @access  Private
  */
-router.post('/tip-podcaster', [
-  body('podcastId').isMongoId().withMessage('Invalid podcast ID'),
-  body('amount').isFloat({ min: 0.001 }).withMessage('Amount must be at least 0.001 ETH'),
-  body('message').optional().isString().withMessage('Message must be a string')
-], async (req, res) => {
+router.post('/tip-podcaster', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Basic validation without express-validator
+    const { podcastId, amount, message = '' } = req.body;
+    
+    if (!podcastId || !amount) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Podcast ID and amount are required'
       });
     }
-
-    const { podcastId, amount, message = '' } = req.body;
+    
+    // Basic amount validation
+    const amountFloat = parseFloat(amount);
+    if (isNaN(amountFloat) || amountFloat < 0.001) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be at least 0.001 ETH'
+      });
+    }
     const senderAddress = req.session.accountId;
 
     if (!senderAddress) {

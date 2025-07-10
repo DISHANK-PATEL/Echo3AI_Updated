@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+// const { body, validationResult } = require('express-validator');
 const ethereumManager = require('../config/ethereum');
 const logger = require('../utils/logger');
 const router = express.Router();
@@ -9,21 +9,25 @@ const router = express.Router();
  * @desc    Authenticate with MetaMask
  * @access  Public
  */
-router.post('/metamask/login', [
-  body('address').isEthereumAddress().withMessage('Invalid Ethereum address'),
-  body('signature').isString().notEmpty().withMessage('Signature is required'),
-  body('message').isString().notEmpty().withMessage('Message is required')
-], async (req, res) => {
+router.post('/metamask/login', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Basic validation without express-validator
+    const { address, signature, message } = req.body;
+    
+    if (!address || !signature || !message) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Address, signature, and message are required'
       });
     }
     
-    const { address, signature, message } = req.body;
+    // Basic Ethereum address validation
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid Ethereum address format'
+      });
+    }
     
     // Verify the signature
     const ethers = require('ethers');
