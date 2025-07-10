@@ -697,6 +697,9 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
+
+# Transcripts (stored in MongoDB instead)
+server/transcripts/
 .pyre/
 
 # pytype static type analyzer

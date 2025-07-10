@@ -143,12 +143,6 @@ mongoose.connect(process.env.MONGODB_URI).then(() => {
 // Import Podcast model
 const Podcast = require('./models/Podcast');
 
-// Create transcripts directory if it doesn't exist
-const transcriptsDir = path.join(__dirname, 'transcripts');
-if (!fs.existsSync(transcriptsDir)) {
-  fs.mkdirSync(transcriptsDir);
-}
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -269,11 +263,6 @@ app.post('/api/upload', upload.fields([
                 transcriptLength: transcript.length,
                 preview: transcript.substring(0, 100) + '...'
               });
-
-              // Save transcript to a .txt file
-              const txtPath = path.join(transcriptsDir, videoFile.originalname + '.txt');
-              fs.writeFileSync(txtPath, transcript, 'utf8');
-              logger.info('Transcript saved to file:', txtPath);
             }
           } catch (err) {
             logger.error("Transcription parse error:", err);
