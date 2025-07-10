@@ -29,6 +29,7 @@ const PodcastGrid = () => {
       const res = await fetch('http://localhost:5001/api/podcasts');
       const data = await res.json();
       setPodcasts(Array.isArray(data.podcasts) ? data.podcasts : []);
+      console.log('Fetched podcasts:', data.podcasts);
     } catch (err) {
       // handle error
     } finally {

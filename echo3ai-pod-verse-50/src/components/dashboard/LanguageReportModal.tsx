@@ -91,68 +91,70 @@ const LanguageReportModal: React.FC<LanguageReportModalProps> = ({ isOpen, onClo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[500px] h-[400px] bg-gray-900 border-gray-700 text-white">
-        <DialogHeader className="border-b border-gray-700 pb-4">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold text-teal-300">Language Safety Report</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-white hover:bg-gray-700"
-              onClick={onClose}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          <p className="text-sm text-gray-400 mt-2">{podcast.title}</p>
-        </DialogHeader>
+      <DialogContent className="w-[500px] h-[400px] bg-black border-gray-700 text-white">
+        <div className="text-white h-full flex flex-col">
+          <DialogHeader className="border-b border-gray-700 pb-4">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-bold text-white">Language Safety Report</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:text-white hover:bg-gray-700"
+                onClick={onClose}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-sm text-white mt-2">{podcast.title}</p>
+          </DialogHeader>
 
-        <div className="mt-4 overflow-y-auto flex-1">
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center space-x-3 p-3 border border-gray-700 rounded-lg">
-                  <Skeleton className="w-4 h-4 bg-gray-700" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4 bg-gray-700" />
-                    <Skeleton className="h-3 w-1/2 bg-gray-700" />
+          <div className="mt-4 overflow-y-auto flex-1">
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center space-x-3 p-3 border border-gray-700 rounded-lg">
+                    <Skeleton className="w-4 h-4 bg-gray-700" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4 bg-gray-700" />
+                      <Skeleton className="h-3 w-1/2 bg-gray-700" />
+                    </div>
+                    <Skeleton className="w-12 h-6 bg-gray-700" />
                   </div>
-                  <Skeleton className="w-12 h-6 bg-gray-700" />
-                </div>
-              ))}
-            </div>
-          ) : report.length === 0 ? (
-            <div className="text-center py-8">
-              <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-green-400 mb-2">All Clear!</h3>
-              <p className="text-gray-400">No language safety issues detected in this episode.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {report.map((issue) => (
-                <div
-                  key={issue.id}
-                  className={`flex items-center space-x-3 p-3 border rounded-lg ${getSeverityColor(issue.severity)}`}
-                >
-                  {getSeverityIcon(issue.severity)}
-                  <div className="flex-1">
-                    <p className="font-medium text-white">{issue.phrase}</p>
-                    <p className="text-sm text-gray-400">{issue.category}</p>
+                ))}
+              </div>
+            ) : report.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">All Clear!</h3>
+                <p className="text-white">No language safety issues detected in this episode.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {report.map((issue) => (
+                  <div
+                    key={issue.id}
+                    className={`flex items-center space-x-3 p-3 border rounded-lg ${getSeverityColor(issue.severity)}`}
+                  >
+                    {getSeverityIcon(issue.severity)}
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{issue.phrase}</p>
+                      <p className="text-sm text-white">{issue.category}</p>
+                    </div>
+                    <div className="text-sm font-mono text-white bg-gray-800 px-2 py-1 rounded">
+                      {issue.timestamp}
+                    </div>
                   </div>
-                  <div className="text-sm font-mono text-teal-300 bg-gray-800 px-2 py-1 rounded">
-                    {issue.timestamp}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!loading && report.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-700 text-sm text-white">
+              Found {report.length} potential language safety issue{report.length !== 1 ? 's' : ''} in this episode.
             </div>
           )}
         </div>
-
-        {!loading && report.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-700 text-sm text-gray-400">
-            Found {report.length} potential language safety issue{report.length !== 1 ? 's' : ''} in this episode.
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

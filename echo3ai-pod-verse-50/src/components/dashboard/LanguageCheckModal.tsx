@@ -98,11 +98,17 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
   };
 
   const formatAnalysis = (text: string) => {
-    // Convert markdown-style formatting to HTML
+    // Improved markdown to HTML conversion
     return text
+      // Headings: lines starting with ** and ending with **
+      .replace(/^\*\*(.+)\*\*$/gm, '<h2>$1</h2>')
+      // Bold: **text**
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italic: *text*
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Newlines to <br>
       .replace(/\n/g, '<br>')
+      // Bullet points: - text
       .replace(/- (.*?)(?=<br>|$)/g, '• $1');
   };
 
@@ -154,8 +160,9 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
                 </p>
               </div>
 
-              <div 
-                className="prose prose-invert max-w-none bg-gray-900/50 rounded-lg p-6 border border-gray-700/50"
+              <div
+                className="max-w-none bg-gray-900/50 rounded-lg p-6 border border-gray-700/50 analysis-white-text"
+                style={{ color: '#fff' }}
                 dangerouslySetInnerHTML={{ __html: formatAnalysis(analysis) }}
               />
             </div>
@@ -179,6 +186,14 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
           )}
         </div>
       </DialogContent>
+      {/* Force all text inside analysis box to be white */}
+      <style>{`
+        .analysis-white-text, .analysis-white-text * {
+          color: #fff !important;
+          opacity: 1 !important;
+          filter: none !important;
+        }
+      `}</style>
     </Dialog>
   );
 };
