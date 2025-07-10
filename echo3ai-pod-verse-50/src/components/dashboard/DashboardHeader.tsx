@@ -3,8 +3,6 @@ import { Search, Wallet, LogOut } from 'lucide-react';
 import AddPodcastModal from './AddPodcastModal';
 import { useWallet } from '@/hooks/useWallet';
 import InternetIdentityLogin from '../InternetIdentityLogin';
-import walletconnectLogo from '../../assets/walletconnect.svg';
-import plugLogo from '../../assets/plug.png';
 import { useEffect } from 'react';
 
 interface DashboardHeaderProps {
@@ -96,7 +94,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
             >
               {plugPrincipal ? (
                 <>
-                  <img src={plugLogo} alt="Plug" className="w-6 h-6" />
+                  <img src="/plug.png" alt="Plug" className="w-6 h-6" />
                   <span className="ml-2 font-semibold">Connected</span>
                   <span className="relative group ml-2">
                     <LogOut className="w-4 h-4" />
@@ -119,8 +117,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
               ) : (
                 <>
                   <img src="/metamask.png" alt="Metamask" className="w-6 h-6" />
-                  <img src={walletconnectLogo} alt="WalletConnect" className="w-6 h-6 ml-1" />
-                  <img src={plugLogo} alt="Plug" className="w-6 h-6 ml-1" />
+                  <img src="/plug.png" alt="Plug" className="w-6 h-6 ml-1" />
                   <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
                 </>
               )}
@@ -136,7 +133,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
                       <span className="text-white font-semibold">MetaMask</span>
                     </button>
                     <button onClick={handleConnectPlug} className="flex flex-col items-center px-6 py-4 bg-gray-800 rounded-xl hover:bg-teal-700 transition-all">
-                      <img src={plugLogo} alt="Plug" className="w-10 h-10 mb-2" />
+                      <img src="/plug.png" alt="Plug" className="w-10 h-10 mb-2" />
                       <span className="text-white font-semibold">Plug</span>
                     </button>
                   </div>
