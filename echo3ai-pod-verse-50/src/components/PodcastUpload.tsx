@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, File, X, Check, Music, Video, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface UploadedFile {
   file: File;
@@ -11,6 +12,7 @@ interface UploadedFile {
 }
 
 const PodcastUpload = () => {
+  const navigate = useNavigate();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +132,7 @@ const PodcastUpload = () => {
           
           <Button 
             className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-teal-500/25 transition-all duration-300 hover:scale-105"
+            onClick={() => navigate('/dashboard')}
           >
             Choose Files
           </Button>

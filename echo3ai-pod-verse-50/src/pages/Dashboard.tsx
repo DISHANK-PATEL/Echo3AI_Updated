@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import PodcastGrid from '../components/dashboard/PodcastGrid';
 import DashboardCursor from '../components/dashboard/DashboardCursor';
@@ -8,6 +8,7 @@ import DashboardBackground from '../components/dashboard/DashboardBackground';
 const Dashboard = () => {
   // Removed loading and isAuthenticated state
   // const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     console.log('Dashboard loaded. Authentication check skipped.');
@@ -34,8 +35,8 @@ const Dashboard = () => {
       <DashboardBackground />
       <DashboardCursor />
       <div className="relative z-10">
-        <DashboardHeader />
-        <PodcastGrid />
+        <DashboardHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <PodcastGrid searchQuery={searchQuery} />
       </div>
     </div>
   );

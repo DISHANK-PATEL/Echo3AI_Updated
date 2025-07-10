@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileAudio, Search, CircleCheck, MessageSquare, BookAudio } from 'lucide-react';
+import { FileAudio, Search, CircleCheck, MessageSquare, BookAudio, ShieldCheck } from 'lucide-react';
 
 const Features = () => {
   const features = [
@@ -26,7 +26,7 @@ const Features = () => {
     {
       icon: CircleCheck,
       title: "Instant Tipping",
-      description: "NEAR-based token payments let listeners support creators directly, no NFTs required.",
+      description: "Sepolia Test ETH payments let listeners support creators directly.",
       gradient: "from-orange-500 to-red-500"
     },
     {
@@ -34,6 +34,12 @@ const Features = () => {
       title: "Multilingual Support",
       description: "Real-time translations and transcripts make podcasts accessible to global audiences.",
       gradient: "from-indigo-500 to-purple-500"
+    },
+    {
+      icon: ShieldCheck,
+      title: "AI Fact Check",
+      description: "Fact-checking with DuckDuckGo, Cheerio, and advanced language moderation for safe, reliable content.",
+      gradient: "from-yellow-500 to-green-500"
     }
   ];
 

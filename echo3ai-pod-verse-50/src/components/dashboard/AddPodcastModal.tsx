@@ -197,7 +197,7 @@ const AddPodcastModal = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button 
-            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-teal-500/25 transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5"
+            className="bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-lg hover:shadow-teal-500/25 transition-all duration-300 hover:scale-110 transform-gpu hover:-translate-y-1"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Podcast

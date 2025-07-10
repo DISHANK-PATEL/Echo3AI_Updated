@@ -98,10 +98,12 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
   };
 
   const formatAnalysis = (text: string) => {
-    // Improved markdown to HTML conversion
+    // Enhanced markdown to HTML conversion with colored headings
     return text
-      // Headings: lines starting with ** and ending with **
-      .replace(/^\*\*(.+)\*\*$/gm, '<h2>$1</h2>')
+      // Main Headings: lines starting with ** and ending with ** (red and bold)
+      .replace(/^\*\*(.+)\*\*$/gm, '<span style="color:#ef4444;font-weight:bold;font-size:1.2em;">$1</span>')
+      // Subheadings: lines starting with * and ending with * (cyan and bold)
+      .replace(/^\*(.+)\*$/gm, '<span style="color:#06b6d4;font-weight:bold;">$1</span>')
       // Bold: **text**
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       // Italic: *text*

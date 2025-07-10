@@ -49,6 +49,10 @@ const Hero = () => {
           </div>
         </div>
 
+        {/* Logo above headline */}
+        <div className="flex justify-center mb-6">
+          <img src="/mic.png" alt="Echo3AI Logo" className="w-32 h-32 md:w-40 md:h-40 rounded-xl shadow-2xl" />
+        </div>
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in delay-200 leading-tight">
           The Future of
           <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-teal-400 text-transparent bg-clip-text block animate-pulse">
@@ -57,7 +61,7 @@ const Hero = () => {
         </h1>
 
         <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto animate-fade-in delay-400 leading-relaxed">
-          AI-enhanced transcripts, chapter navigation, moderation, and tipping—without NFTs. 
+          AI-enhanced transcripts, chapter navigation, moderation, and tipping—using Sepolia Test ETH.
           Built on IPFS and powered by cutting-edge AI.
         </p>
 

@@ -3,8 +3,10 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CirclePlay, MessageSquare } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const LiveDemo = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-20 px-4 relative bg-black">
       <div className="max-w-6xl mx-auto">
@@ -88,6 +90,7 @@ const LiveDemo = () => {
             <Button 
               size="lg"
               className="bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-2xl hover:scale-105 transition-all duration-300 transform-gpu hover:-translate-y-1"
+              onClick={() => navigate('/dashboard')}
             >
               Try Live Demo
             </Button>

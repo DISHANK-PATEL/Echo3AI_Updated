@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import EnhancedPodcastTile from './EnhancedPodcastTile';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -17,10 +17,15 @@ const generateMockPodcast = (id: number) => ({
   listeners: Math.floor(Math.random() * 10000) + 100,
 });
 
-const PodcastGrid = () => {
+interface PodcastGridProps {
+  searchQuery: string;
+}
+
+const PodcastGrid: React.FC<PodcastGridProps> = ({ searchQuery }) => {
   const [podcasts, setPodcasts] = useState<any[]>([]);
+  const [displayedPodcasts, setDisplayedPodcasts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const loadCount = useRef(1);
 
   // Fetch podcasts from backend
   const fetchPodcasts = async () => {
@@ -29,6 +34,8 @@ const PodcastGrid = () => {
       const res = await fetch('http://localhost:5001/api/podcasts');
       const data = await res.json();
       setPodcasts(Array.isArray(data.podcasts) ? data.podcasts : []);
+      setDisplayedPodcasts(Array.isArray(data.podcasts) ? data.podcasts : []);
+      loadCount.current = 1;
       console.log('Fetched podcasts:', data.podcasts);
     } catch (err) {
       // handle error
@@ -45,12 +52,40 @@ const PodcastGrid = () => {
     return () => window.removeEventListener('podcastUploaded', handler);
   }, []);
 
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (loading) return;
+    const scrollY = window.scrollY || window.pageYOffset;
+    const windowHeight = window.innerHeight;
+    const fullHeight = document.body.scrollHeight;
+    if (fullHeight - (scrollY + windowHeight) < 300) {
+      // Near bottom, append more podcasts
+      setDisplayedPodcasts(prev => [...prev, ...podcasts]);
+      loadCount.current += 1;
+    }
+  }, [loading, podcasts]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Filter podcasts by search query
+  const filteredPodcasts = displayedPodcasts.filter((podcast) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      podcast.title?.toLowerCase().includes(q) ||
+      podcast.creator?.toLowerCase().includes(q) ||
+      podcast.guest?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Grid Container */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-max">
-        {podcasts.map((podcast, index) => (
-          <EnhancedPodcastTile key={podcast._id || podcast.id} podcast={podcast} index={index} />
+        {filteredPodcasts.map((podcast, index) => (
+          <EnhancedPodcastTile key={podcast._id || podcast.id + '-' + index} podcast={podcast} index={index} />
         ))}
         {/* Loading Skeletons */}
         {loading && Array.from({ length: 6 }).map((_, i) => (
@@ -64,17 +99,6 @@ const PodcastGrid = () => {
           </div>
         ))}
       </div>
-      {/* End of content indicator */}
-      {!hasMore && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-lg font-medium">
-            You've reached the end of the universe! 🚀
-          </div>
-          <div className="text-gray-500 text-sm mt-2">
-            But don't worry, new podcasts are being uploaded every minute.
-          </div>
-        </div>
-      )}
     </div>
   );
 };
