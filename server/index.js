@@ -80,6 +80,7 @@ app.use(cors({
     'https://echo3ai-pod-verse-50.vercel.app', // Vercel deployed frontend
     'https://echo3ai-updated-3.vercel.app', // (if you have another Vercel deployment)
     'https://echo3ai-updated-3.onrender.com', // (if you ever serve frontend from Render)
+    'https://echo3-ai-updated-buqvjccqg-dishanks-projects-ceb029e7.vercel.app', // <--- ADD THIS LINE
     // Add any additional frontend URLs here as needed
   ],
   credentials: true
