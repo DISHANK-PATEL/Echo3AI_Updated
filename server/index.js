@@ -72,13 +72,13 @@ app.use(helmet({
 app.use(compression());
 
 // CORS configuration
-// app.use(cors({
-//   origin: [
-//     'http://localhost:3000',
-//     'http://localhost:8080'
-//   ],
-//   credentials: true
-// }));
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:8080'
+  ],
+  credentials: true
+}));
 
 // Rate limiting - DISABLED
 // const limiter = rateLimit({
