@@ -57,7 +57,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
   const checkBackendAuth = async () => {
     setIsCheckingAuth(true);
     try {
-      const response = await fetch('http://localhost:5001/auth/status', {
+      const response = await fetch('https://echo3ai-updated-3.onrender.com/auth/status', {
         method: 'GET',
         credentials: 'include'
       });
@@ -174,7 +174,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
 
     try {
       // First, validate with backend
-      const validateResponse = await fetch('http://localhost:5001/api/tip-podcaster/validate', {
+      const validateResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/tip-podcaster/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,7 +202,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
       }
 
       // Get contract info from backend
-      const contractInfoResponse = await fetch('http://localhost:5001/api/contract-info');
+      const contractInfoResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/contract-info');
       const contractInfo = await contractInfoResponse.json();
 
       if (!contractInfo.success) {
@@ -245,7 +245,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
       });
 
       // Record the transaction with backend
-      const recordResponse = await fetch('http://localhost:5001/api/tip-podcaster/record', {
+      const recordResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/tip-podcaster/record', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -41,7 +41,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose, podcast }) => 
       setIsLoading(true);
       
       // Fetch transcript from MongoDB
-      const response = await fetch(`http://localhost:5001/api/podcasts/${podcast._id}/transcript`);
+      const response = await fetch(`https://echo3ai-updated-3.onrender.com/api/podcasts/${podcast._id}/transcript`);
       const result = await response.json();
       
       if (result.success) {
@@ -107,7 +107,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ isOpen, onClose, podcast }) => 
       
       try {
         // Send to chat API
-        const response = await fetch('http://localhost:5001/api/chat', {
+        const response = await fetch('https://echo3ai-updated-3.onrender.com/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

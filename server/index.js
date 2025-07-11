@@ -72,13 +72,13 @@ app.use(helmet({
 app.use(compression());
 
 // CORS configuration
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:8080'
-  ],
-  credentials: true
-}));
+// app.use(cors({
+//   origin: [
+//     'http://localhost:3000',
+//     'http://localhost:8080'
+//   ],
+//   credentials: true
+// }));
 
 // Rate limiting - DISABLED
 // const limiter = rateLimit({
@@ -970,7 +970,7 @@ app.listen(PORT, async () => {
   console.log(`--- SERVER STARTED ON PORT ${PORT} ---`);
   logger.info(`🚀 Echo3AI Backend Server running on port ${PORT}`);
   logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔗 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+  //logger.info(`🔗 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
   
   try {
     console.log('--- INITIALIZING ETHEREUM ---');

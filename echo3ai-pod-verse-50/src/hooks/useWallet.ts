@@ -85,7 +85,7 @@ export const useWallet = () => {
       // Authenticate with backend
       try {
         // Get nonce from backend
-        const nonceResponse = await fetch('http://localhost:5001/auth/nonce', {
+        const nonceResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/nonce', {
           method: 'GET',
           credentials: 'include'
         });
@@ -104,7 +104,7 @@ export const useWallet = () => {
         });
         
         // Send signature to backend for authentication
-        const authResponse = await fetch('http://localhost:5001/auth/metamask/login', {
+        const authResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/metamask/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export const useWallet = () => {
   const disconnectWallet = async () => {
     // Clear backend session
     try {
-      await fetch('http://localhost:5001/auth/logout', {
+      await fetch('https://echo3ai-updated-3.onrender.com/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -222,7 +222,7 @@ export const useWallet = () => {
         if (accounts.length > 0) {
           // Check if backend session is still valid
           try {
-            const authStatusResponse = await fetch('http://localhost:5001/auth/status', {
+            const authStatusResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/status', {
               method: 'GET',
               credentials: 'include'
             });
