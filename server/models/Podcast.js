@@ -19,6 +19,6 @@ const podcastSchema = new mongoose.Schema({
   published: { type: Boolean, default: false }, // New field to control visibility
 }, { suppressReservedKeysWarning: true });
 
-const Podcast = mongoose.model('Podcast', podcastSchema);
+const Podcast = mongoose.model('Podcast', podcastSchema, 'podcasts');
 
 module.exports = Podcast; 
