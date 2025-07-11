@@ -77,7 +77,10 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:8080',
     'http://localhost:5173', // Vite default
-    'https://echo3ai-pod-verse-50.vercel.app', // Add your deployed frontend URL here
+    'https://echo3ai-pod-verse-50.vercel.app', // Vercel deployed frontend
+    'https://echo3ai-updated-3.vercel.app', // (if you have another Vercel deployment)
+    'https://echo3ai-updated-3.onrender.com', // (if you ever serve frontend from Render)
+    // Add any additional frontend URLs here as needed
   ],
   credentials: true
 }));
