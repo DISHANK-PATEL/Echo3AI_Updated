@@ -75,7 +75,9 @@ app.use(compression());
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'http://localhost:5173', // Vite default
+    'https://echo3ai-pod-verse-50.vercel.app', // Add your deployed frontend URL here
   ],
   credentials: true
 }));
