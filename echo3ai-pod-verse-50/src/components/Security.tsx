@@ -20,9 +20,8 @@ const Security = () => {
         <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50 mb-12 hover:bg-gray-800/50 transition-all duration-500 hover:scale-105 transform-gpu">
           <CardContent className="p-8">
             <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              All logic lives in Rust canisters on ICP—auditable, tamper-proof, and permissionless. 
-              Every transaction is transparent, every algorithm is verifiable, and your data remains 
-              under your complete control.
+              All core logic is implemented on secure, open, and auditable infrastructure—tamper-resistant and permissionless. 
+              Every transaction is transparent, every algorithm is verifiable, and your data remains under your complete control.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6">
