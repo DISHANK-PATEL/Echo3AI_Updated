@@ -150,41 +150,31 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
   }, [showAccountSelector]);
 
   const handleTip = async () => {
-    if (!isConnected) {
-      connectWallet();
+    if (!window.ethereum) {
+      setError('MetaMask is not installed');
       return;
     }
-
+    if (!podcast.podcasterWalletAddress) {
+      setError('No recipient address found');
+      return;
+    }
     const amount = selectedAmount || parseFloat(customAmount);
     if (!amount || amount < 0.001) {
       setError('Please select a valid amount (minimum 0.001 ETH)');
       return;
     }
-
-    // Check if user is trying to tip themselves (if we have the podcaster's address)
-    if (selectedAccount && podcast.podcasterWalletAddress) {
-      if (selectedAccount.toLowerCase() === podcast.podcasterWalletAddress.toLowerCase()) {
-        setError('Cannot send tip to yourself. Please use a different account or contact the podcaster to update their wallet address.');
-        return;
-      }
-    }
-
     setIsTipping(true);
     setError(null);
-
     try {
-      // Direct ETH transfer using MetaMask
-      const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const weiAmount = ethers.parseEther(amount.toString());
-      const tx = await signer.sendTransaction({
-        to: podcast.podcasterWalletAddress,
-        value: weiAmount,
-        gasLimit: 21000n // Standard ETH transfer gas limit
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const from = accounts[0];
+      const to = podcast.podcasterWalletAddress;
+      const value = '0x' + (BigInt(Math.floor(amount * 1e18))).toString(16);
+      const tx = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to, value }],
       });
-      // Wait for transaction confirmation
-      await tx.wait();
       setSuccess(true);
       setTimeout(() => {
         onClose();
@@ -194,7 +184,6 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
         setTipMessage('');
       }, 2000);
     } catch (err: any) {
-      console.error('Tip error:', err);
       setError(err.message || 'Failed to send tip');
     } finally {
       setIsTipping(false);
