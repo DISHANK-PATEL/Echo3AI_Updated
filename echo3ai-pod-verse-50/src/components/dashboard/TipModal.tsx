@@ -173,115 +173,26 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
     setError(null);
 
     try {
-      // First, validate with backend
-      const validateResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/tip-podcaster/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          podcastId: podcast._id,
-          amount: amount,
-          message: tipMessage || `Tip for ${podcast.title}`
-        }),
-        credentials: 'include'
-      });
-
-      const validateResult = await validateResponse.json();
-
-      if (!validateResult.success) {
-        if (validateResult.error === 'Authentication required') {
-          setError('Please reconnect your wallet to authenticate with the server');
-          setTimeout(() => {
-            connectWallet();
-          }, 2000);
-        } else {
-          setError(validateResult.error || 'Validation failed');
-        }
-        return;
-      }
-
-      // Get contract info from backend
-      const contractInfoResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/contract-info');
-      const contractInfo = await contractInfoResponse.json();
-
-      if (!contractInfo.success) {
-        setError('Failed to get contract information');
-        return;
-      }
-
-      // Execute direct ETH transfer (no smart contract)
+      // Direct ETH transfer using MetaMask
       const { ethers } = await import('ethers');
-      
-      // Create provider and signer
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
-      // Convert amount to wei
       const weiAmount = ethers.parseEther(amount.toString());
-      
-      console.log('Preparing direct ETH transfer:', {
-        recipientAddress: validateResult.recipientAddress,
-        amount: amount,
-        weiAmount: weiAmount.toString(),
-        message: tipMessage || `Tip for ${podcast.title}`
-      });
-      
-      // Send direct ETH transfer
       const tx = await signer.sendTransaction({
-        to: validateResult.recipientAddress,
+        to: podcast.podcasterWalletAddress,
         value: weiAmount,
         gasLimit: 21000n // Standard ETH transfer gas limit
       });
-
       // Wait for transaction confirmation
-      console.log('Waiting for transaction confirmation...');
-      const receipt = await tx.wait();
-      
-      console.log('Transaction confirmed:', {
-        hash: tx.hash,
-        blockNumber: receipt.blockNumber,
-        gasUsed: receipt.gasUsed.toString()
-      });
-
-      // Record the transaction with backend
-      const recordResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/tip-podcaster/record', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          podcastId: podcast._id,
-          amount: amount,
-          message: tipMessage || `Tip for ${podcast.title}`,
-          transactionHash: tx.hash,
-          recipientAddress: validateResult.recipientAddress
-        }),
-        credentials: 'include'
-      });
-
-      if (!recordResponse.ok) {
-        const recordError = await recordResponse.json();
-        console.error('Failed to record transaction:', recordError);
-        // Don't throw error here - the transaction was successful, just recording failed
-        console.warn('Transaction successful but recording failed:', recordError.error || 'Unknown error');
-      }
-      
-      const recordResult = await recordResponse.json();
-
-      if (recordResult.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          onClose();
-          setSuccess(false);
-          setSelectedAmount(null);
-          setCustomAmount('');
-          setTipMessage('');
-        }, 2000);
-      } else {
-        setError('Tip sent but failed to record. Transaction hash: ' + tx.hash);
-      }
-
+      await tx.wait();
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+        setSuccess(false);
+        setSelectedAmount(null);
+        setCustomAmount('');
+        setTipMessage('');
+      }, 2000);
     } catch (err: any) {
       console.error('Tip error:', err);
       setError(err.message || 'Failed to send tip');
