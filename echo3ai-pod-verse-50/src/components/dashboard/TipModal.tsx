@@ -27,8 +27,6 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
   const [availableAccounts, setAvailableAccounts] = useState<string[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [accountBalance, setAccountBalance] = useState<string | null>(null);
-  const [isBackendAuthenticated, setIsBackendAuthenticated] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   
   const { isConnected, connectWallet, address } = useWallet();
 
@@ -44,35 +42,11 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
         setAvailableAccounts(accounts);
         if (accounts.length > 0 && !selectedAccount) {
           setSelectedAccount(accounts[0]);
-          // Get balance for the initially selected account
           await getAccountBalance(accounts[0]);
         }
       } catch (error) {
         console.error('Failed to get accounts:', error);
       }
-    }
-  };
-
-  // Check backend authentication status
-  const checkBackendAuth = async () => {
-    setIsCheckingAuth(true);
-    try {
-      const response = await fetch('https://echo3ai-updated-3.onrender.com/auth/status', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      const result = await response.json();
-      setIsBackendAuthenticated(result.success && result.isAuthenticated);
-      
-      if (!result.success || !result.isAuthenticated) {
-        console.log('Backend authentication required');
-      }
-    } catch (error) {
-      console.error('Failed to check backend auth:', error);
-      setIsBackendAuthenticated(false);
-    } finally {
-      setIsCheckingAuth(false);
     }
   };
 
@@ -84,8 +58,6 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
           method: 'eth_getBalance',
           params: [accountAddress, 'latest']
         });
-        
-        // Convert from wei to ETH
         const balanceEth = (parseInt(balance, 16) / Math.pow(10, 18)).toFixed(4);
         setAccountBalance(balanceEth);
       } catch (error) {
@@ -98,40 +70,30 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
   // Switch to selected account
   const switchToAccount = async (accountAddress: string) => {
     try {
-      // Request the specific account
       await window.ethereum.request({
         method: 'eth_requestAccounts',
         params: [accountAddress]
       });
-      
       setSelectedAccount(accountAddress);
       setShowAccountSelector(false);
-      
-      // Get balance for the selected account
       await getAccountBalance(accountAddress);
-      
-      // Re-authenticate with the new account
-      await connectWallet();
     } catch (error) {
       console.error('Failed to switch account:', error);
       setError('Failed to switch account');
     }
   };
 
-  // Load accounts and check auth when modal opens
+  // Load accounts when modal opens
   useEffect(() => {
     if (isOpen) {
       if (isConnected) {
         getAvailableAccounts();
-        checkBackendAuth();
       } else {
-        // If not connected to MetaMask, try to connect
         connectWallet();
       }
     }
   }, [isOpen, isConnected]);
 
-  // Close account selector when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
@@ -139,11 +101,9 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
         setShowAccountSelector(false);
       }
     };
-
     if (showAccountSelector) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -241,44 +201,7 @@ const TipModal: React.FC<TipModalProps> = ({ isOpen, onClose, podcast }) => {
                       MetaMask Connected: {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Unknown'}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {isCheckingAuth ? (
-                      <div className="flex items-center space-x-1">
-                        <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
-                        <span className="text-xs text-blue-400">Checking...</span>
-                      </div>
-                    ) : isBackendAuthenticated ? (
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-xs text-green-400">Authenticated</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                        <span className="text-xs text-red-400">Not Authenticated</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
-                {/* Re-authenticate button */}
-                {!isBackendAuthenticated && !isCheckingAuth && (
-                  <Button
-                    onClick={async () => {
-                      try {
-                        await connectWallet();
-                        await checkBackendAuth();
-                      } catch (error) {
-                        setError('Failed to re-authenticate. Please try again.');
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-orange-500/50 text-orange-400 hover:border-orange-400 hover:text-orange-300"
-                  >
-                    <Loader2 className="w-3 h-3 mr-2" />
-                    Re-authenticate with MetaMask
-                  </Button>
-                )}
               </div>
 
               {/* Account Selector */}
