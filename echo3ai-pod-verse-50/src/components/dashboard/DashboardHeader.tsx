@@ -26,12 +26,14 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
   };
 
   const handleConnectMetaMask = () => {
-    setShowWalletModal(false);
     connectWallet();
   };
 
+  const handleDisconnectMetaMask = () => {
+    disconnectWallet();
+  };
+
   const handleConnectPlug = async () => {
-    setShowWalletModal(false);
     const plug = (window as any).ic?.plug;
     if (!plug) {
       alert('Plug wallet is not installed. Please install the Plug extension.');
@@ -48,6 +50,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
     } catch (err) {
       alert('Failed to connect to Plug: ' + (err as Error).message);
     }
+  };
+
+  const handleDisconnectPlug = () => {
+    setPlugPrincipal(null);
   };
 
   const formatAddress = (addr: string) => {
@@ -84,63 +90,28 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
           {/* Action Buttons */}
           <div className="flex items-center space-x-4">
             <AddPodcastModal />
-            
-            <button 
-              onClick={handleWalletClick}
+            {/* MetaMask Button */}
+            <button
+              onClick={isConnected ? handleDisconnectMetaMask : handleConnectMetaMask}
               disabled={isConnecting}
-              className={`relative border border-gray-700/50 hover:border-teal-400/50 text-white hover:text-teal-300 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform-gpu hover:-translate-y-0.5 bg-gray-900/30 hover:bg-gray-800/50 flex items-center space-x-2 ${
-                isConnecting ? 'opacity-50 cursor-not-allowed' : ''
-              } ${(isConnected || plugPrincipal) ? 'border-green-400/50 text-green-300' : ''}`}
+              className={`flex items-center px-4 py-2 rounded-xl font-semibold border transition-all duration-300 space-x-2
+                ${isConnected ? 'border-green-400/50 text-green-300 bg-gray-900/50' : 'border-gray-700/50 text-white bg-gray-900/30 hover:border-blue-400/50 hover:bg-blue-900/30'}
+                ${isConnecting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {plugPrincipal ? (
-                <>
-                  <img src="/plug.png" alt="Plug" className="w-6 h-6" />
-                  <span className="ml-2 font-semibold">Connected</span>
-                  <span className="relative group ml-2">
-                    <LogOut className="w-4 h-4" />
-                    <span className="absolute left-1/2 -translate-x-1/2 mt-8 bg-gray-900 text-white text-xs rounded px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg border border-gray-700">
-                      {plugPrincipal}
-                    </span>
-                  </span>
-                </>
-              ) : isConnected ? (
-                <>
-                  <img src="/metamask.png" alt="Metamask" className="w-6 h-6" />
-                  <span className="ml-2 font-semibold">Connected</span>
-                  <span className="relative group ml-2">
-                    <LogOut className="w-4 h-4" />
-                    <span className="absolute left-1/2 -translate-x-1/2 mt-8 bg-gray-900 text-white text-xs rounded px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10 shadow-lg border border-gray-700">
-                      {address}
-                    </span>
-                  </span>
-                </>
-              ) : (
-                <>
-                  <img src="/metamask.png" alt="Metamask" className="w-6 h-6" />
-                  <img src="/plug.png" alt="Plug" className="w-6 h-6 ml-1" />
-                  <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
-                </>
-              )}
+              <img src="/metamask.png" alt="MetaMask" className="w-6 h-6" />
+              <span>{isConnected ? `MetaMask: ${formatAddress(address)}` : 'Connect MetaMask'}</span>
+              {isConnected && <LogOut className="w-4 h-4 ml-1" />}
             </button>
-            {/* Wallet selection modal */}
-            {showWalletModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-                <div className="bg-gray-900 rounded-2xl p-8 shadow-2xl border border-blue-400/30 flex flex-col items-center">
-                  <h2 className="text-xl font-bold text-white mb-6">Choose Wallet</h2>
-                  <div className="flex gap-6">
-                    <button onClick={handleConnectMetaMask} className="flex flex-col items-center px-6 py-4 bg-gray-800 rounded-xl hover:bg-blue-700 transition-all">
-                      <img src="/metamask.png" alt="MetaMask" className="w-10 h-10 mb-2" />
-                      <span className="text-white font-semibold">MetaMask</span>
-                    </button>
-                    <button onClick={handleConnectPlug} className="flex flex-col items-center px-6 py-4 bg-gray-800 rounded-xl hover:bg-teal-700 transition-all">
-                      <img src="/plug.png" alt="Plug" className="w-10 h-10 mb-2" />
-                      <span className="text-white font-semibold">Plug</span>
-                    </button>
-                  </div>
-                  <button onClick={() => setShowWalletModal(false)} className="mt-6 text-gray-400 hover:text-red-400">Cancel</button>
-                </div>
-              </div>
-            )}
+            {/* Plug Button */}
+            <button
+              onClick={plugPrincipal ? handleDisconnectPlug : handleConnectPlug}
+              className={`flex items-center px-4 py-2 rounded-xl font-semibold border transition-all duration-300 space-x-2
+                ${plugPrincipal ? 'border-green-400/50 text-green-300 bg-gray-900/50' : 'border-gray-700/50 text-white bg-gray-900/30 hover:border-teal-400/50 hover:bg-teal-900/30'}`}
+            >
+              <img src="/plug.png" alt="Plug" className="w-6 h-6" />
+              <span>{plugPrincipal ? `Plug: ${plugPrincipal.slice(0, 6)}...${plugPrincipal.slice(-4)}` : 'Connect Plug'}</span>
+              {plugPrincipal && <LogOut className="w-4 h-4 ml-1" />}
+            </button>
             <InternetIdentityLogin size={28} />
           </div>
         </div>
