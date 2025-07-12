@@ -27,7 +27,7 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
       if (isAuthenticated) {
         const identity = client.getIdentity();
         const principal = identity.getPrincipal().toText();
-        setIsAuthenticated(true);
+          setIsAuthenticated(true);
         setPrincipal(principal);
         if (onAuthChange) onAuthChange(true, principal);
       }
@@ -66,13 +66,13 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
         });
       });
 
-      // Send principal to backend
-      const response = await fetch("/auth/icp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        // Send principal to backend
+        const response = await fetch("/auth/icp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         body: JSON.stringify({ principal }),
-      });
+        });
 
       if (!response.ok) {
         console.error("Failed to authenticate with backend");

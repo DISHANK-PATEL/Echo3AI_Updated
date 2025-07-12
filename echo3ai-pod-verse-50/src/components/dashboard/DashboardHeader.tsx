@@ -91,7 +91,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
           <div className="flex items-center space-x-4">
             <AddPodcastModal />
             {/* MetaMask Button */}
-            <button
+            <button 
               onClick={isConnected ? handleDisconnectMetaMask : handleConnectMetaMask}
               disabled={isConnecting}
               className={`flex items-center px-4 py-2 rounded-xl font-semibold border transition-all duration-300 space-x-2
@@ -111,7 +111,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
               <img src="/plug.png" alt="Plug" className="w-6 h-6" />
               <span>{plugPrincipal ? `Plug: ${plugPrincipal.slice(0, 6)}...${plugPrincipal.slice(-4)}` : 'Connect Plug'}</span>
               {plugPrincipal && <LogOut className="w-4 h-4 ml-1" />}
-            </button>
+                    </button>
             <InternetIdentityLogin size={28} />
           </div>
         </div>
