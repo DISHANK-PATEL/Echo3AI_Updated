@@ -36,6 +36,8 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
   const [isLoading, setIsLoading] = useState(false);
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
   const [hasLoadedVideo, setHasLoadedVideo] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleFactCheckClick = (e: React.MouseEvent) => {
@@ -71,12 +73,27 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
   console.log('EnhancedPodcastTile render - showFactCheck:', showFactCheck);
 
   // Custom play/pause handler
-  const handlePlayPause = (e: React.MouseEvent) => {
+  const handlePlayPause = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!showVideo) {
       setShowVideo(true);
       setIsPlaying(true);
-      setHasLoadedVideo(true); // Mark as loaded
+      setHasLoadedVideo(true);
+      if (!blobUrl && podcast.ipfsHash) {
+        setIsLoading(true);
+        setFetchError(null);
+        try {
+          const response = await fetch(`https://gateway.pinata.cloud/ipfs/${podcast.ipfsHash}`);
+          if (!response.ok) throw new Error('Failed to fetch video from IPFS');
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setBlobUrl(url);
+        } catch (err: any) {
+          setFetchError('Failed to load video. Please try again later.');
+        } finally {
+          setIsLoading(false);
+        }
+      }
     } else {
       if (videoRef.current) {
         if (isPlaying) {
@@ -119,34 +136,43 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
                 }`}
                 style={{ display: showVideo ? 'flex' : 'none' }}
               >
-                <video
-                  ref={videoRef}
-                  controls={isHovered || isMiniPlayer}
-                  autoPlay={showVideo}
-                  width="100%"
-                  height="100%"
-                  style={{
-                    objectFit: isMiniPlayer ? 'cover' : 'cover',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: isMiniPlayer ? '0.5rem' : '1rem',
-                    boxShadow: '0 4px 32px rgba(0,0,0,0.25)'
-                  }}
-                  onClick={e => e.stopPropagation()}
-                  onEnded={() => { setShowVideo(false); setIsPlaying(false); setIsMiniPlayer(false); }}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onLoadedData={() => setIsLoading(false)}
-                  onLoadStart={() => setIsLoading(true)}
-                >
-                  <source src={`https://gateway.pinata.cloud/ipfs/${podcast.ipfsHash}`} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                {/* Loading Spinner */}
-                {isLoading && (
+                {/* Error message */}
+                {fetchError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50 text-red-400 text-lg font-bold">
+                    {fetchError}
+                  </div>
+                )}
+                {/* Loading Spinner while fetching blob */}
+                {isLoading && !blobUrl && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-30">
                     <Loader2 className="w-12 h-12 text-white animate-spin" />
                   </div>
+                )}
+                {/* Video only if blobUrl is available */}
+                {blobUrl && !fetchError && (
+                  <video
+                    ref={videoRef}
+                    controls={isHovered || isMiniPlayer}
+                    autoPlay={showVideo}
+                    width="100%"
+                    height="100%"
+                    style={{
+                      objectFit: isMiniPlayer ? 'cover' : 'cover',
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: isMiniPlayer ? '0.5rem' : '1rem',
+                      boxShadow: '0 4px 32px rgba(0,0,0,0.25)'
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    onEnded={() => { setShowVideo(false); setIsPlaying(false); setIsMiniPlayer(false); }}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onLoadedData={() => setIsLoading(false)}
+                    onLoadStart={() => setIsLoading(true)}
+                    src={blobUrl}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
                 )}
                 {/* Custom Play/Pause Overlay - only show when not in mini player mode */}
                 {!isMiniPlayer && (
