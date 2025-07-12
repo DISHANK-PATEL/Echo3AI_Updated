@@ -77,10 +77,10 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:8080',
     'http://localhost:5173', // Vite default
-    'https://echo3ai-pod-verse-50.vercel.app', // Vercel deployed frontend
-    'https://echo3ai-updated-3.vercel.app', // (if you have another Vercel deployment)
-    'https://echo3ai-updated-3.onrender.com', // (if you ever serve frontend from Render)
-    'https://echo3-ai-updated-buqvjccqg-dishanks-projects-ceb029e7.vercel.app', // <--- ADD THIS LINE
+    'https://echo3ai-pod-verse-50.vercel.app',
+    'https://echo3ai-updated-3.vercel.app',
+    'https://echo3ai-updated-3.onrender.com',
+    'https://echo3-ai-updated-buqvjccqg-dishanks-projects-ceb029e7.vercel.app',
     'https://echo3-ai-updated-vg5f.vercel.app', // NEW FINAL FRONTEND
     // Add any additional frontend URLs here as needed
   ],
@@ -111,8 +111,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.SESSION_COOKIE_SECURE === 'true',
-    httpOnly: process.env.SESSION_COOKIE_HTTPONLY !== 'false',
+    secure: true, // must be true for HTTPS
+    httpOnly: true,
+    sameSite: 'none', // must be 'none' for cross-site cookies
     maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
