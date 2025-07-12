@@ -35,6 +35,7 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
+  const [hasLoadedVideo, setHasLoadedVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleFactCheckClick = (e: React.MouseEvent) => {
@@ -75,6 +76,7 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
     if (!showVideo) {
       setShowVideo(true);
       setIsPlaying(true);
+      setHasLoadedVideo(true); // Mark as loaded
     } else {
       if (videoRef.current) {
         if (isPlaying) {
@@ -107,25 +109,28 @@ const EnhancedPodcastTile: React.FC<EnhancedPodcastTileProps> = ({ podcast, inde
         >
           {/* Thumbnail Container or Video Player */}
           <div className={`relative overflow-hidden transition-all duration-500 ${
-            showVideo && isMiniPlayer ? 'h-32' : 'h-48'
+            (showVideo || hasLoadedVideo) && isMiniPlayer ? 'h-32' : 'h-48'
           }`}>
             {/* Video Player with custom overlay */}
-            {showVideo && podcast.ipfsHash ? (
-              <div className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black/80 z-20 transition-opacity duration-500 ${
-                isMiniPlayer ? 'rounded-lg' : 'rounded-2xl'
-              }`}>
+            {(showVideo || hasLoadedVideo) && podcast.ipfsHash ? (
+              <div
+                className={`absolute inset-0 w-full h-full flex items-center justify-center bg-black/80 z-20 transition-opacity duration-500 ${
+                  isMiniPlayer ? 'rounded-lg' : 'rounded-2xl'
+                }`}
+                style={{ display: showVideo ? 'flex' : 'none' }}
+              >
                 <video
                   ref={videoRef}
                   controls={isHovered || isMiniPlayer}
-                  autoPlay
+                  autoPlay={showVideo}
                   width="100%"
                   height="100%"
-                  style={{ 
-                    objectFit: isMiniPlayer ? 'cover' : 'cover', 
-                    width: '100%', 
-                    height: '100%', 
-                    borderRadius: isMiniPlayer ? '0.5rem' : '1rem', 
-                    boxShadow: '0 4px 32px rgba(0,0,0,0.25)' 
+                  style={{
+                    objectFit: isMiniPlayer ? 'cover' : 'cover',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: isMiniPlayer ? '0.5rem' : '1rem',
+                    boxShadow: '0 4px 32px rgba(0,0,0,0.25)'
                   }}
                   onClick={e => e.stopPropagation()}
                   onEnded={() => { setShowVideo(false); setIsPlaying(false); setIsMiniPlayer(false); }}

@@ -36,53 +36,7 @@ export const useWallet = () => {
     return typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask;
   };
 
-  // Helper: Authenticate with backend using MetaMask
-  const authenticateWithBackend = async (address: string) => {
-    try {
-      // Get nonce from backend
-      const nonceResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/nonce', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      if (!nonceResponse.ok) {
-        throw new Error('Failed to get authentication nonce');
-      }
-      const nonceData = await nonceResponse.json();
-      const message = nonceData.message;
-      // Sign the message with MetaMask
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, address]
-      });
-      // Send signature to backend for authentication
-      const authResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/metamask/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          address: address,
-          signature: signature,
-          message: message,
-          chainId: SEPOLIA_CHAIN_ID
-        })
-      });
-      if (!authResponse.ok) {
-        const authError = await authResponse.json();
-        throw new Error(authError.error || 'Authentication failed');
-      }
-      return true;
-    } catch (authError: any) {
-      setWalletState(prev => ({
-        ...prev,
-        error: 'MetaMask backend authentication failed: ' + (authError.message || 'Unknown error'),
-      }));
-      return false;
-    }
-  };
-
-  // Connect to MetaMask (with backend authentication)
+  // Connect to MetaMask (frontend only)
   const connectWallet = async () => {
     if (!isMetaMaskInstalled()) {
       setWalletState(prev => ({
@@ -116,9 +70,6 @@ export const useWallet = () => {
           }
         }
       }
-      // Always authenticate with backend
-      const backendAuthSuccess = await authenticateWithBackend(address);
-      if (!backendAuthSuccess) throw new Error('MetaMask backend authentication failed');
       setWalletState({
         isConnected: true,
         address,
@@ -135,16 +86,8 @@ export const useWallet = () => {
     }
   };
 
-  // Disconnect wallet
+  // Disconnect wallet (frontend only)
   const disconnectWallet = async () => {
-    try {
-      await fetch('https://echo3ai-updated-3.onrender.com/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (error) {
-      console.error('Failed to logout from backend:', error);
-    }
     setWalletState({
       isConnected: false,
       address: null,
@@ -154,28 +97,22 @@ export const useWallet = () => {
     });
   };
 
-  // Listen for account and chain changes, auto re-authenticate if needed
+  // Listen for account and chain changes
   useEffect(() => {
     if (!isMetaMaskInstalled()) return;
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
         disconnectWallet();
       } else {
-        // On account change, always re-authenticate with backend
-        setWalletState(prev => ({ ...prev, address: accounts[0] }));
-        await authenticateWithBackend(accounts[0]);
+        setWalletState(prev => ({ ...prev, address: accounts[0], isConnected: true }));
       }
     };
     const handleChainChanged = async (chainId: string) => {
+      setWalletState(prev => ({ ...prev, chainId }));
       if (chainId !== SEPOLIA_CHAIN_ID) {
         setWalletState(prev => ({ ...prev, error: 'Please switch to Sepolia testnet' }));
       } else {
-        setWalletState(prev => ({ ...prev, chainId, error: null }));
-        // On chain change, re-authenticate with backend
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          await authenticateWithBackend(accounts[0]);
-        }
+        setWalletState(prev => ({ ...prev, error: null }));
       }
     };
     window.ethereum.on('accountsChanged', handleAccountsChanged);
@@ -186,7 +123,7 @@ export const useWallet = () => {
     };
   }, []);
 
-  // On page load, check connection and backend session, auto re-authenticate if needed
+  // On page load, check connection (frontend only)
   useEffect(() => {
     const checkConnection = async () => {
       if (!isMetaMaskInstalled()) return;
@@ -194,16 +131,6 @@ export const useWallet = () => {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         if (accounts.length > 0) {
-          // Check backend session
-          const authStatusResponse = await fetch('https://echo3ai-updated-3.onrender.com/auth/status', {
-            method: 'GET',
-            credentials: 'include'
-          });
-          const authStatus = await authStatusResponse.json();
-          if (!authStatus.success || !authStatus.isAuthenticated || authStatus.accountId?.toLowerCase() !== accounts[0].toLowerCase()) {
-            // Backend session expired or mismatched, re-authenticate
-            await authenticateWithBackend(accounts[0]);
-          }
           setWalletState({
             isConnected: true,
             address: accounts[0],
