@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-// import { AuthClient } from "@dfinity/auth-client";
+import { AuthClient } from "@dfinity/auth-client";
 
 interface Props {
   onAuthChange?: (isAuthenticated: boolean, principal?: string) => void;
@@ -10,56 +10,72 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [principal, setPrincipal] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authClient, setAuthClient] = useState<AuthClient | null>(null);
 
   useEffect(() => {
-    // Check authentication status from backend
-    checkAuthStatus();
-  }, [onAuthChange]);
+    // Initialize auth client
+    initializeAuth();
+  }, []);
 
-  const checkAuthStatus = async () => {
+  const initializeAuth = async () => {
     try {
-      const response = await fetch("/auth/status", {
-        method: "GET",
-        credentials: "include",
-      });
+      const client = await AuthClient.create();
+      setAuthClient(client);
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.walletType === 'icp') {
-          setIsAuthenticated(true);
-          setPrincipal(data.accountId);
-          if (onAuthChange) onAuthChange(true, data.accountId);
-        }
+      // Check if user is already authenticated
+      const isAuthenticated = await client.isAuthenticated();
+      if (isAuthenticated) {
+        const identity = client.getIdentity();
+        const principal = identity.getPrincipal().toText();
+        setIsAuthenticated(true);
+        setPrincipal(principal);
+        if (onAuthChange) onAuthChange(true, principal);
       }
     } catch (error) {
-      console.error("Error checking auth status:", error);
+      console.error("Error initializing auth client:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async () => {
-    try {
-      // For now, we'll use a simple prompt for the principal
-      // In a real implementation, you'd integrate with Internet Identity
-      const principalText = prompt("Enter your Internet Identity Principal:");
-      
-      if (principalText) {
-        // Send principal to backend
-        const response = await fetch("/auth/icp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ principal: principalText }),
-        });
+    if (!authClient) {
+      console.error("Auth client not initialized");
+      return;
+    }
 
-        if (response.ok) {
-          setIsAuthenticated(true);
-          setPrincipal(principalText);
-          if (onAuthChange) onAuthChange(true, principalText);
-        } else {
-          alert("Login failed. Please try again.");
-        }
+    try {
+      // Start the login process
+      await new Promise<void>((resolve, reject) => {
+        authClient.login({
+          identityProvider: process.env.NODE_ENV === 'production' 
+            ? 'https://identity.ic0.app' 
+            : 'http://127.0.0.1:4943/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai',
+          onSuccess: () => {
+            const identity = authClient.getIdentity();
+            const principal = identity.getPrincipal().toText();
+            setIsAuthenticated(true);
+            setPrincipal(principal);
+            if (onAuthChange) onAuthChange(true, principal);
+            resolve();
+          },
+          onError: (error) => {
+            console.error("Login error:", error);
+            reject(error);
+          },
+        });
+      });
+
+      // Send principal to backend
+      const response = await fetch("/auth/icp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ principal }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to authenticate with backend");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -68,16 +84,25 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
   };
 
   const logout = async () => {
+    if (!authClient) {
+      console.error("Auth client not initialized");
+      return;
+    }
+
     try {
+      await authClient.logout();
+      setIsAuthenticated(false);
+      setPrincipal(null);
+      if (onAuthChange) onAuthChange(false);
+
+      // Also logout from backend
       const response = await fetch("/auth/logout", {
         method: "POST",
         credentials: "include",
       });
 
-      if (response.ok) {
-        setIsAuthenticated(false);
-        setPrincipal(null);
-        if (onAuthChange) onAuthChange(false);
+      if (!response.ok) {
+        console.error("Failed to logout from backend");
       }
     } catch (error) {
       console.error("Logout error:", error);
