@@ -1,5 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, createContext, useContext } from "react";
+import type { AuthClient as AuthClientType } from "@dfinity/auth-client";
 import { AuthClient } from "@dfinity/auth-client";
+
+interface InternetIdentityAuthContextType {
+  isAuthenticated: boolean;
+  principal: string | null;
+  setAuth: (auth: { isAuthenticated: boolean; principal: string | null }) => void;
+}
+
+const InternetIdentityAuthContext = createContext<InternetIdentityAuthContextType | undefined>(undefined);
+
+export const useInternetIdentityAuth = () => {
+  const ctx = useContext(InternetIdentityAuthContext);
+  if (!ctx) throw new Error("useInternetIdentityAuth must be used within InternetIdentityAuthProvider");
+  return ctx;
+};
+
+export const InternetIdentityAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [principal, setPrincipal] = useState<string | null>(null);
+
+  const setAuth = ({ isAuthenticated, principal }: { isAuthenticated: boolean; principal: string | null }) => {
+    setIsAuthenticated(isAuthenticated);
+    setPrincipal(principal);
+  };
+
+  return (
+    <InternetIdentityAuthContext.Provider value={{ isAuthenticated, principal, setAuth }}>
+      {children}
+    </InternetIdentityAuthContext.Provider>
+  );
+};
 
 interface Props {
   onAuthChange?: (isAuthenticated: boolean, principal?: string) => void;
@@ -7,31 +38,30 @@ interface Props {
 }
 
 const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [principal, setPrincipal] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authClient, setAuthClient] = useState<AuthClient | null>(null);
+  const [authClient, setAuthClient] = useState<AuthClientType | null>(null);
+  const { isAuthenticated, principal, setAuth } = useInternetIdentityAuth();
 
   useEffect(() => {
-    // Initialize auth client
     initializeAuth();
+    // eslint-disable-next-line
   }, []);
 
   const initializeAuth = async () => {
     try {
       const client = await AuthClient.create();
       setAuthClient(client);
-      
-      // Check if user is already authenticated
       const isAuthenticated = await client.isAuthenticated();
       if (isAuthenticated) {
         const identity = client.getIdentity();
         const principal = identity.getPrincipal().toText();
-          setIsAuthenticated(true);
-        setPrincipal(principal);
+        setAuth({ isAuthenticated: true, principal });
         if (onAuthChange) onAuthChange(true, principal);
+      } else {
+        setAuth({ isAuthenticated: false, principal: null });
       }
     } catch (error) {
+      setAuth({ isAuthenticated: false, principal: null });
       console.error("Error initializing auth client:", error);
     } finally {
       setLoading(false);
@@ -43,9 +73,7 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
       console.error("Auth client not initialized");
       return;
     }
-
     try {
-      // Start the login process
       await new Promise<void>((resolve, reject) => {
         authClient.login({
           identityProvider: process.env.NODE_ENV === 'production' 
@@ -54,8 +82,7 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
           onSuccess: () => {
             const identity = authClient.getIdentity();
             const principal = identity.getPrincipal().toText();
-            setIsAuthenticated(true);
-            setPrincipal(principal);
+            setAuth({ isAuthenticated: true, principal });
             if (onAuthChange) onAuthChange(true, principal);
             resolve();
           },
@@ -65,19 +92,8 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
           },
         });
       });
-
-        // Send principal to backend
-        const response = await fetch("/auth/icp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        body: JSON.stringify({ principal }),
-        });
-
-      if (!response.ok) {
-        console.error("Failed to authenticate with backend");
-      }
     } catch (error) {
+      setAuth({ isAuthenticated: false, principal: null });
       console.error("Login error:", error);
       alert("Login failed. Please try again.");
     }
@@ -88,23 +104,12 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
       console.error("Auth client not initialized");
       return;
     }
-
     try {
       await authClient.logout();
-      setIsAuthenticated(false);
-      setPrincipal(null);
+      setAuth({ isAuthenticated: false, principal: null });
       if (onAuthChange) onAuthChange(false);
-
-      // Also logout from backend
-      const response = await fetch("/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        console.error("Failed to logout from backend");
-      }
     } catch (error) {
+      setAuth({ isAuthenticated: false, principal: null });
       console.error("Logout error:", error);
     }
   };

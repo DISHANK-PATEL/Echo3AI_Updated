@@ -4,6 +4,7 @@ import AddPodcastModal from './AddPodcastModal';
 import { useWallet } from '@/hooks/useWallet';
 import InternetIdentityLogin from '../InternetIdentityLogin';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardHeaderProps {
   searchQuery: string;
@@ -14,6 +15,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
   const { isConnected, address, connectWallet, disconnectWallet, isConnecting, error } = useWallet();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [plugPrincipal, setPlugPrincipal] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleWalletClick = () => {
     if (plugPrincipal) {
@@ -65,7 +67,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ searchQuery, setSearc
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between gap-6">
           {/* Logo & Title */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/') }>
             <img src="/mic.png" alt="Echo3AI Logo" className="w-10 h-10 rounded-xl shadow-2xl shadow-teal-400/30 hover:rotate-3 transition-transform duration-300" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-400 via-blue-400 to-purple-400 text-transparent bg-clip-text">
               Echo3AI
