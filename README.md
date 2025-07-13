@@ -1,4 +1,4 @@
-# Echo3AI - Decentralized AI-Powered Podcast Platform
+# Echo3AI - Decentralized AI-Powered Podcast Platform (Link: https://echo3-ai-updated-vg5f.vercel.app)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)](https://nodejs.org/)
@@ -23,7 +23,7 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 ## Sequence Diagram:
 <img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
 
-## 🛠 Deployment Setup
+## 🛠 Deployment Setup (Link: https://echo3-ai-updated-vg5f.vercel.app)
 - **Frontend**: Deployed on Vercel for fast and scalable static hosting.
 - **Backend**: Hosted on Render (free-tier), which sleeps after inactivity.
 
