@@ -58,15 +58,15 @@ const PodcastProPlayer: React.FC<PodcastProPlayerProps> = ({ cid, ...props }) =>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
         <span className="ml-4 text-teal-400 text-lg font-semibold">Loading video...</span>
-      </div>
-    );
+    </div>
+  );
   }
   if (!url) {
     return null;
   }
 
   return (
-    <video
+        <video
       src={url}
       controls
       style={{ width: '100%', maxHeight: 480 }}
