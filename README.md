@@ -11,7 +11,7 @@
 
 > **Empowering creators and listeners with AI-verified, decentralized content.**
 
-Echo3AI is a revolutionary decentralized podcast platform that leverages artificial intelligence to verify factual claims in content, ensuring users have access to reliable, fact-checked information while providing creators with blockchain-based monetization opportunities.
+Echo3AI is a revolutionary decentralized podcast platform that leverages artificial intelligence to verify factual claims in content, ensuring users have access to reliable, fact-checked information while providing creators with blockchain-based monetization opportunities. In addition to AI-powered fact-checking, Echo3AI offers advanced language check reports to help creators ensure content appropriateness and inclusivity. All podcast content and metadata are stored in a decentralized manner using IPFS and blockchain technology, guaranteeing censorship resistance, transparency, and true content ownership.
 
 ## 🎯 What Problem Does Echo3AI Solve?
 
@@ -19,6 +19,16 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 - **Content Trust**: Helps users verify podcast content authenticity
 - **Creator Monetization**: Provides podcasters with new ways to earn from their content
 - **Centralized Control**: Eliminates traditional platform censorship and control
+
+## Sequence Diagram:
+<img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
+
+## 🛠 Deployment Setup
+- **Frontend**: Deployed on Vercel for fast and scalable static hosting.
+- **Backend**: Hosted on Render (free-tier), which sleeps after inactivity.
+
+- **Keep-alive Mechanism**:
+A GitHub Actions Cron Job runs at regular intervals to ping the backend and prevent it from sleeping, ensuring faster response times for users.
 
 ## ✨ Key Features
 
@@ -57,6 +67,25 @@ Echo3AI uses a transparent, multi-step AI fact-checking process to ensure podcas
     - A list of all links and sources used in the decision
 - **User Empowerment:**
   - Users can click and review every source themselves, ensuring full transparency and trust in the verification process.
+ 
+  **Example Structure:**
+
+```json
+{
+  "factualVerification": "The claim is partially supported by recent studies...",
+  "motivationAnalysis": "The speaker may benefit by...",
+  "intentFraming": "The statement is framed to emphasize...",
+  "sentimentTone": "The tone is neutral and informative.",
+  "finalVerdict": "TRUE",
+  "evidence": [
+    {
+      "title": "Example Source Title",
+      "link": "https://example.com/article",
+      "snippet": "This article discusses..."
+    }
+  ]
+}
+```
 
 ### 🌐 Decentralized Architecture
 - **IPFS Storage**: Content stored on InterPlanetary File System
