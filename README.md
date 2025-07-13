@@ -213,11 +213,4 @@ npm start
 - **Email**: dishankpatel16082003@gmail.com
 - **Project**: Echo3AI - Decentralised AI Podcast Platform
 
-## 🔗 Links
-
-- [Project Documentation](PROJECT_INTRO.md)
-- [Frontend README](echo3ai-pod-verse-50/README.md)
-- [Backend Setup](server/README_SEPOLIA_SETUP.md)
-- [Transcription Guide](server/README_TRANSCRIPTION.md)
-
 **Echo3AI** - Where AI meets decentralized content creation. 🚀
