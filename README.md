@@ -21,6 +21,9 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 - **Centralized Control**: Eliminates traditional platform censorship and control
 - **Advanced Video Control**: Allows you to interact with Video Podcast better.
 
+## 🎬Demo Video:
+https://drive.google.com/file/d/1xKN4HYX1sICxN4P2h7V52qgOHdfQiIk-/view?usp=sharing
+
 ## Sequence Diagram:
 <img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
 
