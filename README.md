@@ -19,6 +19,7 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 - **Content Trust**: Helps users verify podcast content authenticity
 - **Creator Monetization**: Provides podcasters with new ways to earn from their content
 - **Centralized Control**: Eliminates traditional platform censorship and control
+- **Advanced Video Control**: Allows you to interact with Video Podcast better.
 
 ## Sequence Diagram:
 <img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
@@ -47,7 +48,7 @@ A GitHub Actions Cron Job runs at regular intervals to ping the backend and prev
 - **User control:**
   Users can manage their devices and credentials themselves, and can’t be locked out by a single provider.
 
-### 🤖 AI-Powered Fact Checking
+### 🤖 AI-Powered Fact Checking & Chat with Episode
 
 Echo3AI uses a transparent, multi-step AI fact-checking process to ensure podcast content is reliable and evidence-based. Every verification decision is accompanied by links to supporting sources, so users can review the evidence themselves.
 
