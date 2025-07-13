@@ -7,10 +7,10 @@ const ipfsUrlErrorTimestamps = new Map<string, number>();
 /**
  * Hook to fetch and cache IPFS video URLs per CID, with retry after 30 seconds if unavailable and 5s delay before each IPFS hit.
  * @param cid The IPFS content identifier for the video
- * @param gatewayUrl The base URL of your IPFS gateway (e.g., https://ipfs.io/ipfs/)
+ * @param gatewayUrl The base URL of your IPFS gateway (default: Pinata)
  * @returns { url, loading, error }
  */
-export function useIpfsVideoUrlCache(cid: string, gatewayUrl: string = 'https://ipfs.io/ipfs/') {
+export function useIpfsVideoUrlCache(cid: string, gatewayUrl: string = 'https://gateway.pinata.cloud/ipfs/') {
   const [url, setUrl] = useState<string | null>(ipfsUrlCache.get(cid) || null);
   const [loading, setLoading] = useState<boolean>(!ipfsUrlCache.has(cid));
   const [error, setError] = useState<string | null>(null);
