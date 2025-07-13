@@ -50,16 +50,19 @@ interface PodcastProPlayerProps {
 }
 
 const PodcastProPlayer: React.FC<PodcastProPlayerProps> = ({ cid, ...props }) => {
-  const { url, loading, error } = useIpfsVideoUrlCache(cid);
+  const { url, loading } = useIpfsVideoUrlCache(cid);
+  const [videoError, setVideoError] = useState(false);
 
-  if (loading) {
-    return <div>Loading video...</div>;
-  }
-  if (error) {
-    return <div style={{ color: 'red' }}>Error: {error}</div>;
+  if (loading || videoError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        <span className="ml-4 text-teal-400 text-lg font-semibold">Loading video...</span>
+      </div>
+    );
   }
   if (!url) {
-    return <div>No video available.</div>;
+    return null;
   }
 
   return (
@@ -67,6 +70,7 @@ const PodcastProPlayer: React.FC<PodcastProPlayerProps> = ({ cid, ...props }) =>
       src={url}
       controls
       style={{ width: '100%', maxHeight: 480 }}
+      onError={() => setVideoError(true)}
       {...props}
     />
   );
