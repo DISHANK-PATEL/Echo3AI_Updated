@@ -461,33 +461,30 @@ if (!GEMINI_KEY) {
   logger.warn('GEMINI_API_KEY not found in environment variables. Fact-checking will not work properly.');
 }
 
-/**
- * Perform a DuckDuckGo HTML search for the given query.
- */
-async function ddgSearch(query, limit = 3) {
+// Replace ddgSearch with Google Custom Search API
+async function googleCseSearch(query, limit = 3) {
+  const apiKey = 'AIzaSyBGUTGMUSGz9TWVtgQ9lwIwt1PBikzswa4'; // HARDCODED API KEY
+  const cx = 'c23519848826c4a0c'; // HARDCODED CSE ID
   try {
-    console.log('[ddgSearch] Query:', query);
-    const res = await axios.get("https://html.duckduckgo.com/html", { params: { q: query } });
-    console.log('[ddgSearch] HTTP status:', res.status);
-    // Log a snippet of the raw HTML for debugging
-    console.log('[ddgSearch] Raw HTML snippet:', res.data.slice(0, 500));
-    const $ = cheerio.load(res.data);
-    const results = [];
-    $(".result").slice(0, limit).each((i, el) => {
-      const $el = $(el);
-      const title = $el.find(".result__a").text().trim();
-      const link = $el.find(".result__a").attr("href");
-      const snippet = $el.find(".result__snippet").text().trim();
-      console.log(`[ddgSearch] Result #${i+1}:`, { title, link, snippet });
-      results.push({ title, link, snippet });
+    const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
+      params: {
+        key: apiKey,
+        cx: cx,
+        q: query,
+        num: limit
+      }
     });
-    console.log('[ddgSearch] Total results found:', results.length);
-    return results;
+    const items = response.data.items || [];
+    return items.slice(0, limit).map(item => ({
+      title: item.title,
+      link: item.link,
+      snippet: item.snippet || ''
+    }));
   } catch (error) {
-    console.error('[ddgSearch] DuckDuckGo search failed:', error.message);
+    console.error('[googleCseSearch] Google CSE search failed:', error.message);
     if (error.response) {
-      console.error('[ddgSearch] Response status:', error.response.status);
-      console.error('[ddgSearch] Response data:', error.response.data?.slice?.(0, 500));
+      console.error('[googleCseSearch] Response status:', error.response.status);
+      console.error('[googleCseSearch] Response data:', error.response.data);
     }
     return [];
   }
@@ -522,7 +519,7 @@ async function factCheckTranscript(transcript) {
     }
 
     // 1️⃣ Retrieve web evidence
-    const results = await ddgSearch(transcript, 4);
+    const results = await googleCseSearch(transcript, 4);
     
     if (results.length === 0) {
       return { 
