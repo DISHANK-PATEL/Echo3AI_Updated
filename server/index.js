@@ -466,20 +466,29 @@ if (!GEMINI_KEY) {
  */
 async function ddgSearch(query, limit = 3) {
   try {
+    console.log('[ddgSearch] Query:', query);
     const res = await axios.get("https://html.duckduckgo.com/html", { params: { q: query } });
+    console.log('[ddgSearch] HTTP status:', res.status);
+    // Log a snippet of the raw HTML for debugging
+    console.log('[ddgSearch] Raw HTML snippet:', res.data.slice(0, 500));
     const $ = cheerio.load(res.data);
     const results = [];
     $(".result").slice(0, limit).each((i, el) => {
       const $el = $(el);
-      results.push({
-        title: $el.find(".result__a").text().trim(),
-        link: $el.find(".result__a").attr("href"),
-        snippet: $el.find(".result__snippet").text().trim(),
-      });
+      const title = $el.find(".result__a").text().trim();
+      const link = $el.find(".result__a").attr("href");
+      const snippet = $el.find(".result__snippet").text().trim();
+      console.log(`[ddgSearch] Result #${i+1}:`, { title, link, snippet });
+      results.push({ title, link, snippet });
     });
+    console.log('[ddgSearch] Total results found:', results.length);
     return results;
   } catch (error) {
-    logger.error('DuckDuckGo search failed:', error.message);
+    console.error('[ddgSearch] DuckDuckGo search failed:', error.message);
+    if (error.response) {
+      console.error('[ddgSearch] Response status:', error.response.status);
+      console.error('[ddgSearch] Response data:', error.response.data?.slice?.(0, 500));
+    }
     return [];
   }
 }

@@ -31,6 +31,16 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 - **Keep-alive Mechanism**:
 A GitHub Actions Cron Job runs at regular intervals to ping the backend and prevent it from sleeping, ensuring faster response times for users.
 
+## Sequence Diagram:
+<img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
+
+## 🛠 Deployment Setup (Link: https://echo3-ai-updated-vg5f.vercel.app)
+- **Frontend**: Deployed on Vercel for fast and scalable static hosting.
+- **Backend**: Hosted on Render (free-tier), which sleeps after inactivity.
+
+- **Keep-alive Mechanism**:
+A GitHub Actions Cron Job runs at regular intervals to ping the backend and prevent it from sleeping, ensuring faster response times for users.
+
 ## ✨ Key Features
 
 ### 🔐 ICP(Internet Computer Protocol) Login (Internet Identity)
@@ -48,7 +58,11 @@ A GitHub Actions Cron Job runs at regular intervals to ping the backend and prev
 - **User control:**
   Users can manage their devices and credentials themselves, and can’t be locked out by a single provider.
 
+<<<<<<< HEAD
 ### 🤖 AI-Powered Fact Checking & Chat with Episode
+=======
+### 🤖 AI-Powered Fact Checking
+>>>>>>> 1bfe29f5c82d59efe6100efcbffec6913230129b
 
 Echo3AI uses a transparent, multi-step AI fact-checking process to ensure podcast content is reliable and evidence-based. Every verification decision is accompanied by links to supporting sources, so users can review the evidence themselves.
 

@@ -317,6 +317,69 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
   }
 
   if (showResults) {
+    // Check for the specific no-evidence message
+    const noEvidenceMsg =
+      factCheckResult?.report &&
+      factCheckResult.report.trim() ===
+        'No web evidence found for fact-checking. Please try a different statement.';
+
+    if (noEvidenceMsg) {
+      return (
+        <Rnd
+          default={{
+            x: window.innerWidth / 2 - 400,
+            y: window.innerHeight / 2 - 150,
+            width: 600,
+            height: 300,
+          }}
+          minWidth={400}
+          minHeight={200}
+          maxWidth={window.innerWidth - 100}
+          maxHeight={window.innerHeight - 100}
+          bounds="window"
+          className="z-50"
+          dragHandleClassName="drag-handle"
+        >
+          <div className="h-full bg-black/90 backdrop-blur-sm border border-teal-400/30 rounded-2xl overflow-hidden shadow-2xl shadow-teal-400/10 flex flex-col">
+            {/* Header */}
+            <div className="drag-handle p-4 border-b border-teal-400/30 bg-gradient-to-r from-gray-900 to-gray-800 cursor-move flex justify-between items-center">
+              <div>
+                <h3 className="text-teal-300 font-bold text-lg">Echo3AI Fact Check Analysis</h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  {statement ? 'Custom Statement Analysis' : podcast.title}
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowResults(false);
+                  setStatement('');
+                  setFactCheckResult(null);
+                  setParsedResult(null);
+                  setError(null);
+                  onClose();
+                }}
+                size="sm"
+                variant="ghost"
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-8">
+              <div className="text-center">
+                <p className="text-yellow-300 text-lg font-semibold mb-2">
+                  Sorry, we couldn't find any web evidence for this statement.
+                </p>
+                <p className="text-gray-300 text-sm">
+                  Please try rephrasing your statement or use a different claim.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Rnd>
+      );
+    }
     return (
       <Rnd
         default={{
