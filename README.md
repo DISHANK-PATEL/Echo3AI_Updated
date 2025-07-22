@@ -21,7 +21,6 @@ Echo3AI is a revolutionary decentralized podcast platform that leverages artific
 - **Centralized Control**: Eliminates traditional platform censorship and control
 - **Advanced Video Control**: Allows you to interact with Video Podcast better.
 
-<<<<<<< HEAD
 ## Sequence Diagram:
 <img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
 
@@ -34,7 +33,6 @@ A GitHub Actions Cron Job runs at regular intervals to ping the backend and prev
 =======
 ## 🎬Demo Video:
 https://drive.google.com/file/d/1xKN4HYX1sICxN4P2h7V52qgOHdfQiIk-/view?usp=sharing
->>>>>>> cbf21bfdf9e794d649a0d835de44e75c0a4aabef
 
 ## Sequence Diagram:
 <img width="1783" height="1360" alt="seq" src="https://github.com/user-attachments/assets/fb17ac53-5c9f-4b98-9f7f-f96d960d0981" />
@@ -62,16 +60,6 @@ A GitHub Actions Cron Job runs at regular intervals to ping the backend and prev
   There’s no central user database to hack or leak; authentication is handled by the decentralized Internet Identity service.
 - **User control:**
   Users can manage their devices and credentials themselves, and can’t be locked out by a single provider.
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-### 🤖 AI-Powered Fact Checking & Chat with Episode
-=======
-### 🤖 AI-Powered Fact Checking
->>>>>>> 1bfe29f5c82d59efe6100efcbffec6913230129b
-=======
-### 🤖 AI-Powered Fact Checking & Chat with Episode
->>>>>>> cbf21bfdf9e794d649a0d835de44e75c0a4aabef
 
 Echo3AI uses a transparent, multi-step AI fact-checking process to ensure podcast content is reliable and evidence-based. Every verification decision is accompanied by links to supporting sources, so users can review the evidence themselves.
 
