@@ -463,8 +463,8 @@ if (!GEMINI_KEY) {
 
 // Replace ddgSearch with Google Custom Search API
 async function googleCseSearch(query, limit = 3) {
-  const apiKey = 'AIzaSyBGUTGMUSGz9TWVtgQ9lwIwt1PBikzswa4'; // HARDCODED API KEY
-  const cx = 'c23519848826c4a0c'; // HARDCODED CSE ID
+ const apiKey = process.env.GOOGLE_CSE_API_KEY;
+ const cx = process.env.GOOGLE_CSE_ID;
   try {
     const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
       params: {
