@@ -454,7 +454,7 @@ app.get("/api/videos/:id", async (req, res) => {
 });
 
 // Fact-checking functionality
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_KEY) {
@@ -668,7 +668,7 @@ User question: ${question}
 Please provide a helpful, accurate response based on the transcript content. If the question is about the creator or guest, use their names when referring to them. Be conversational and engaging while staying true to the content discussed in the podcast.`;
 
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
@@ -793,7 +793,7 @@ Please provide a detailed language analysis in the following format:
 IMPORTANT: Always provide a complete analysis. If no inappropriate language is found, explicitly state that no bad language was detected. Never leave any section empty.`;
 
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
