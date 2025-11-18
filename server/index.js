@@ -54,6 +54,15 @@ console.log('--- TIPJAR ROUTES LOADED ---');
 const app = express();
 console.log('--- EXPRESS APP CREATED ---');
 const PORT = process.env.PORT || 5001;
+const isProduction = process.env.NODE_ENV === 'production';
+const transcriptionEnabled = process.env.ENABLE_TRANSCRIPTION !== 'false';
+const pythonCommand = process.env.PYTHON_CMD || process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
+const transcribeScript = path.join(__dirname, 'transcribe.py');
+
+// Ensure Express knows it's behind a proxy (e.g., Vercel / Render) so secure cookies work
+if (process.env.TRUST_PROXY === 'true' || isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Security middleware
 app.use(helmet({
@@ -106,15 +115,24 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Session configuration
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  logger.warn('SESSION_SECRET missing. Falling back to insecure default. Set SESSION_SECRET in environment!');
+}
+
+const secureCookies = (process.env.SESSION_COOKIE_SECURE || '').toLowerCase() === 'true'
+  ? true
+  : isProduction;
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-super-secret-session-key',
+  secret: sessionSecret || 'development-session-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true, // must be true for HTTPS
+    secure: secureCookies,
     httpOnly: true,
-    sameSite: 'none', // must be 'none' for cross-site cookies
-    maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000 // 24 hours
+    sameSite: secureCookies ? 'none' : 'lax',
+    maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) || 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
 
@@ -129,13 +147,83 @@ app.use(morgan('combined', {
 app.use(requestLogger);
 
 // File upload configuration
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const upload = multer({ 
-  dest: 'uploads/',
+  dest: uploadsDir,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit
     files: 5
   }
 });
+
+async function runTranscription(filePath) {
+  if (!transcriptionEnabled) {
+    logger.warn('Transcription skipped (ENABLE_TRANSCRIPTION=false)');
+    return { transcript: '', error: 'Transcription disabled in environment' };
+  }
+
+  return new Promise((resolve) => {
+    let transcriptOutput = '';
+    let resolved = false;
+
+    const finalize = (result) => {
+      if (!resolved) {
+        resolved = true;
+        resolve(result);
+      }
+    };
+
+    let py;
+    try {
+      py = spawn(pythonCommand, [transcribeScript, filePath], { cwd: __dirname });
+    } catch (spawnError) {
+      logger.error('Failed to start transcription process:', spawnError);
+      return finalize({ transcript: '', error: `Unable to start python process: ${spawnError.message}` });
+    }
+
+    py.stdout.on('data', data => {
+      transcriptOutput += data.toString();
+    });
+
+    py.stderr.on('data', data => {
+      logger.error('Python transcription error:', data.toString());
+    });
+
+    py.on('error', err => {
+      logger.error('Transcription process error:', err);
+      finalize({ transcript: '', error: `Python process error: ${err.message}` });
+    });
+
+    py.on('close', code => {
+      if (code === 0) {
+        try {
+          const output = JSON.parse(transcriptOutput || '{}');
+          if (output.error) {
+            logger.error('Transcription reported error:', output.error);
+            finalize({ transcript: '', error: output.error });
+          } else {
+            const transcript = output.transcript || '';
+            logger.info('Transcription completed successfully', {
+              transcriptLength: transcript.length,
+              preview: transcript.substring(0, 100) + '...'
+            });
+            finalize({ transcript, error: null });
+          }
+        } catch (err) {
+          logger.error('Transcription parse error:', err);
+          finalize({ transcript: '', error: `Failed to parse transcription output: ${err.message}` });
+        }
+      } else {
+        logger.error('Transcription process failed with code:', code);
+        finalize({ transcript: '', error: `Transcription failed with exit code ${code}` });
+      }
+    });
+  });
+}
 
 // MongoDB connection
 console.log('--- CONNECTING TO MONGODB ---');
@@ -230,7 +318,7 @@ app.post('/api/upload', upload.fields([
       'https://api.pinata.cloud/pinning/pinFileToIPFS',
       data,
       {
-        maxBodyLength: 'Infinity',
+        maxBodyLength: Infinity,
         headers: {
           ...data.getHeaders(),
           pinata_api_key: process.env.PINATA_API_KEY,
@@ -241,48 +329,20 @@ app.post('/api/upload', upload.fields([
     const ipfsHash = pinataRes.data.IpfsHash;
     logger.info('File uploaded to IPFS successfully', { ipfsHash });
 
-    // Transcribe the video using the simpler approach
+    // Transcribe the video (optional)
     let transcript = '';
     logger.info('Starting transcription...');
-    
-    const py = spawn("python", ["transcribe.py", videoFile.path]);
-    let transcriptOutput = "";
-
-    py.stdout.on("data", data => {
-      transcriptOutput += data.toString();
-    });
-
-    py.stderr.on("data", data => {
-      logger.error("Python transcription error:", data.toString());
-    });
-
-    // Wait for transcription to complete
-    await new Promise((resolve, reject) => {
-      py.on("close", code => {
-        if (code === 0) {
-          try {
-            const output = JSON.parse(transcriptOutput);
-            if (output.error) {
-              logger.error("Transcription error:", output.error);
-              transcript = 'Transcription failed: ' + output.error;
-            } else {
-              transcript = output.transcript || '';
-              logger.info('Transcription completed successfully', { 
-                transcriptLength: transcript.length,
-                preview: transcript.substring(0, 100) + '...'
-              });
-            }
-          } catch (err) {
-            logger.error("Transcription parse error:", err);
-            transcript = 'Transcription failed: ' + err.message;
-          }
-        } else {
-          logger.error("Transcription process failed with code:", code);
-          transcript = 'Transcription failed with exit code: ' + code;
-        }
-        resolve();
+    const transcriptionResult = await runTranscription(videoFile.path);
+    if (transcriptionResult.error) {
+      logger.warn('Transcription unavailable, continuing without transcript', {
+        reason: transcriptionResult.error
       });
-    });
+      transcript = transcriptionResult.error.startsWith('Transcription disabled')
+        ? ''
+        : `Transcription unavailable: ${transcriptionResult.error}`;
+    } else {
+      transcript = transcriptionResult.transcript;
+    }
 
     // Clean up uploaded file
     try {
@@ -302,7 +362,7 @@ app.post('/api/upload', upload.fields([
         'https://api.pinata.cloud/pinning/pinFileToIPFS',
         thumbData,
         {
-          maxBodyLength: 'Infinity',
+          maxBodyLength: Infinity,
           headers: {
             ...thumbData.getHeaders(),
             pinata_api_key: process.env.PINATA_API_KEY,
@@ -904,43 +964,53 @@ IMPORTANT: Always provide a complete analysis. If no inappropriate language is f
 });
 
 // Transcription endpoint
-app.post('/api/transcribe', upload.single('video'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      error: 'No file uploaded'
-    });
-  }
-
-  const videoPath = req.file.path;
-  const { spawn } = require('child_process');
-  const py = spawn('python', ['transcribe.py', videoPath]);
-  let transcript = '';
-
-  py.stdout.on('data', data => {
-    transcript += data.toString();
-  });
-
-  py.stderr.on('data', data => {
-    logger.error('Transcription error:', data.toString());
-  });
-
-  py.on('close', code => {
-    fs.unlinkSync(videoPath);
-    try {
-      const result = JSON.parse(transcript);
-      res.json({
-        success: true,
-        ...result
-      });
-    } catch (e) {
-      logger.error('Failed to parse transcript', e);
-      res.status(500).json({ 
+app.post('/api/transcribe', upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
         success: false,
-        error: 'Failed to parse transcript' 
+        error: 'No file uploaded'
       });
     }
-  });
+
+    if (!transcriptionEnabled) {
+      fs.unlinkSync(req.file.path);
+      return res.status(503).json({
+        success: false,
+        error: 'Transcription service disabled',
+        message: 'Set ENABLE_TRANSCRIPTION=true and provide a Python runtime to enable transcription.'
+      });
+    }
+
+    const videoPath = req.file.path;
+    const { transcript, error } = await runTranscription(videoPath);
+    fs.unlinkSync(videoPath);
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        error: `Transcription failed: ${error}`
+      });
+    }
+
+    res.json({
+      success: true,
+      transcript
+    });
+  } catch (e) {
+    logger.error('Transcription endpoint error', e);
+    if (req.file?.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupErr) {
+        logger.warn('Failed to cleanup upload after transcription error', cleanupErr);
+      }
+    }
+    res.status(500).json({
+      success: false,
+      error: e.message || 'Transcription failed'
+    });
+  }
 });
 
 // Error handling middleware
