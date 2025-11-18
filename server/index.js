@@ -97,18 +97,19 @@ app.use(cors({
 }));
 
 // Rate limiting - DISABLED
-// const limiter = rateLimit({
-//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-//   message: {
-//     success: false,
-//     error: 'Too many requests from this IP, please try again later.'
-//   },
-//   standardHeaders: true,
-//   legacyHeaders: false,
-// });
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// app.use(limiter);
+console.log('Rate limiter active!');
+app.use(limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -514,7 +515,7 @@ app.get("/api/videos/:id", async (req, res) => {
 });
 
 // Fact-checking functionality
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_KEY) {
@@ -726,9 +727,11 @@ Podcast Information:
 User question: ${question}
 
 Please provide a helpful, accurate response based on the transcript content. If the question is about the creator or guest, use their names when referring to them. Be conversational and engaging while staying true to the content discussed in the podcast.`;
-
+    
+console.log("gemini 3 is here");
+console.log("GEMINI_KEY", GEMINI_KEY);
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
@@ -853,7 +856,7 @@ Please provide a detailed language analysis in the following format:
 IMPORTANT: Always provide a complete analysis. If no inappropriate language is found, explicitly state that no bad language was detected. Never leave any section empty.`;
 
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },

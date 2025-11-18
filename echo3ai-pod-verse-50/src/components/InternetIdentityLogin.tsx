@@ -76,10 +76,13 @@ const InternetIdentityLogin: React.FC<Props> = ({ onAuthChange, size = 40 }) => 
     try {
       await new Promise<void>((resolve, reject) => {
         authClient.login({
-          identityProvider: process.env.NODE_ENV === 'production' 
+          // identityProvider: process.env.NODE_ENV = 'https://identity.ic0.app',
+            identityProvider: process.env.NODE_ENV === 'production' 
             ? 'https://identity.ic0.app' 
-            : 'http://127.0.0.1:4943/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai',
-          onSuccess: () => {
+            : 'https://identity.ic0.app', 
+            // : 'http://127.0.0.1:4943/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai',
+
+            onSuccess: () => {
             const identity = authClient.getIdentity();
             const principal = identity.getPrincipal().toText();
             setAuth({ isAuthenticated: true, principal });
