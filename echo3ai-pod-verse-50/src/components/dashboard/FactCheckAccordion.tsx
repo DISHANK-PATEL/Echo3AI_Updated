@@ -163,7 +163,7 @@ const FactCheckAccordion: React.FC<FactCheckAccordionProps> = ({ isOpen, onClose
     setShowDialog(false);
     
     try {
-      const response = await fetch('https://echo3ai-updated-3.onrender.com/api/fact-check', {
+      const response = await fetch('https://echo3ai-updated-3.onrender.com /api/fact-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

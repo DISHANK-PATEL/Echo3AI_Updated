@@ -1,6 +1,6 @@
+// index.js - Cleaned & Fixed version
 console.log('--- SERVER INDEX.JS STARTED ---');
 
-// Add error handlers at the very top
 process.on('uncaughtException', (err) => {
   console.error('=== UNCAUGHT EXCEPTION ===');
   console.error('Error:', err.message);
@@ -14,6 +14,9 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise:', promise);
   process.exit(1);
 });
+
+// Load environment first
+require('dotenv').config();
 
 // Load dependencies
 console.log('--- LOADING DEPENDENCIES ---');
@@ -32,7 +35,6 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const cheerio = require('cheerio');
-require('dotenv').config();
 
 // Import custom modules
 console.log('--- LOADING CUSTOM MODULES ---');
@@ -80,7 +82,7 @@ app.use(helmet({
 // Compression middleware
 app.use(compression());
 
-// CORS configuration
+// CORS configuration - fixed trailing space removed
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -90,7 +92,6 @@ app.use(cors({
     'https://echo3ai-updated-3.vercel.app',
     'https://echo3ai-updated-3.onrender.com',
     'https://echo3-ai-updated-buqvjccqg-dishanks-projects-ceb029e7.vercel.app',
-    // 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
     'https://echo3-ai-updated-vg5f.vercel.app', // NEW FINAL FRONTEND
     // Add any additional frontend URLs here as needed
   ],
@@ -98,18 +99,7 @@ app.use(cors({
 }));
 
 // // Rate limiting - DISABLED
-// const limiter = rateLimit({
-//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-//   message: {
-//     success: false,
-//     error: 'Too many requests from this IP, please try again later.'
-//   },
-//   standardHeaders: true,
-//   legacyHeaders: false,
-// });
-
-// console.log('Rate limiter active!');
+// const limiter = rateLimit({ ... });
 // app.use(limiter);
 
 // Body parsing middleware
@@ -301,7 +291,7 @@ app.post('/api/upload', upload.fields([
     if (!allowedTypes.includes(videoFile.mimetype)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid file type. Please upload a video or audio file.'
+        error: 'Invalid file type. Please upload a video or audio file.' 
       });
     }
 
@@ -373,7 +363,7 @@ app.post('/api/upload', upload.fields([
         }
       );
       thumbnailHash = thumbRes.data.IpfsHash;
-      fs.unlinkSync(req.files['thumbnail'][0].path);
+      try { fs.unlinkSync(req.files['thumbnail'][0].path); } catch {}
       logger.info('Thumbnail uploaded successfully', { thumbnailHash });
     }
 
@@ -515,105 +505,114 @@ app.get("/api/videos/:id", async (req, res) => {
   }
 });
 
-// Fact-checking functionality
+// -------------------------------
+// FACT-CHECKING CONFIG
+// -------------------------------
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_KEY) {
-  logger.warn('GEMINI_API_KEY not found in environment variables. Fact-checking will not work properly.');
+  logger.warn('GEMINI_API_KEY not found. Fact-checking will not work.');
 }
 
-// Replace ddgSearch with Google Custom Search API
-async function googleCseSearch(query, limit = 3) {
- const apiKey = process.env.GOOGLE_CSE_API_KEY;
- const cx = process.env.GOOGLE_CSE_ID;
+// -----------------------------------------------------
+// 🦆 DuckDuckGo Search (NO API, HTML Scraper)
+// -----------------------------------------------------
+async function duckSearch(query, count = 5) {
   try {
-    const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
-      params: {
-        key: apiKey,
-        cx: cx,
-        q: query,
-        num: limit
-      }
+    const url = "https://duckduckgo.com/html/?q=" + encodeURIComponent(query);
+
+    const response = await axios.get(url, {
+      headers: { "User-Agent": "Mozilla/5.0" }
     });
-    const items = response.data.items || [];
-    return items.slice(0, limit).map(item => ({
-      title: item.title,
-      link: item.link,
-      snippet: item.snippet || ''
-    }));
+
+    const $ = cheerio.load(response.data);
+    const results = [];
+
+    $("a.result__a").each((i, el) => {
+      if (i >= count) return;
+
+      const title = $(el).text().trim();
+      const link = $(el).attr("href") || "";
+      const snippet = $(el)
+        .parent()
+        .find(".result__snippet")
+        .text()
+        .trim();
+
+      results.push({ title, link, snippet });
+    });
+
+    return results;
   } catch (error) {
-    console.error('[googleCseSearch] Google CSE search failed:', error.message);
-    if (error.response) {
-      console.error('[googleCseSearch] Response status:', error.response.status);
-      console.error('[googleCseSearch] Response data:', error.response.data);
-    }
+    console.error("DuckDuckGo search error:", error.message);
     return [];
   }
 }
 
-/**
- * Fetches the first paragraph of the given URL (optional enrichment).
- */
+// -----------------------------------------------------
+// Extract first paragraph for richer evidence
+// -----------------------------------------------------
 async function extractFirstPara(url) {
   try {
-    const res = await axios.get(url, { timeout: 8000 });
+    const res = await axios.get(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      timeout: 8000
+    });
+
     const $ = cheerio.load(res.data);
-    const p = $("p").first().text().trim();
-    return p || "";
-  } catch (error) {
-    logger.warn('Failed to extract first paragraph from:', url, error.message);
-    return "";
+    return $("p").first().text().trim() || null;
+
+  } catch (err) {
+    logger.warn('Failed to extract first paragraph from:', url, err?.message || err);
+    return null;
   }
 }
 
-/**
- * Accepts a full transcript string, fact-checks it against web sources,
- * and returns a structured report plus the raw evidence items.
- */
+// -----------------------------------------------------
+// MAIN FACT-CHECK FUNCTION
+// -----------------------------------------------------
 async function factCheckTranscript(transcript) {
   try {
     if (!GEMINI_KEY) {
-      return { 
-        report: "Fact-checking is not configured. Please add GEMINI_API_KEY to environment variables.", 
-        evidence: [] 
+      return {
+        report: "Fact-checking is not configured. Add GEMINI_API_KEY.",
+        evidence: []
       };
     }
 
-    // 1️⃣ Retrieve web evidence
-    const results = await googleCseSearch(transcript, 4);
-    
+    // 🔍 Step 1: Get evidence from DuckDuckGo
+    const results = await duckSearch(transcript, 4);
+
     if (results.length === 0) {
-      return { 
-        report: "No web evidence found for fact-checking. Please try a different statement.", 
-        evidence: [] 
+      return {
+        report: "No evidence found. Try another statement.",
+        evidence: []
       };
     }
-    
-    // 2️⃣ Optionally enrich with first paragraph
+
+    // 🔍 Step 2: Add first paragraph enrichment
     for (const r of results) {
       if (r.link) {
-        const excerpt = await extractFirstPara(r.link);
-        if (excerpt) {
-          r.snippet += `\nExcerpt: ${excerpt}`;
-        }
+        const para = await extractFirstPara(r.link);
+        if (para) r.snippet += "\nExcerpt: " + para;
       }
     }
-    
-    // 3️⃣ Build the compositional prompt
+
+    // 🔍 Step 3: Build evidence block for Gemini
     const evidenceBlock = results
-      .map((r, i) => `${i+1}. ${r.title}\n   URL: ${r.link}\n   Snippet: ${r.snippet}`)
+      .map((r, i) => `${i + 1}. ${r.title}\nURL: ${r.link}\nSnippet: ${r.snippet}`)
       .join("\n\n");
 
     const prompt = `
 You are a veteran investigative fact-checker. Given the transcript below, perform:
 
-1. **Factual Verification:** Check the accuracy of key statements.
-2. **Motivation & Benefit Analysis:** What does the speaker gain by these claims?
-3. **Intent & Framing:** How are the statements presented and why?
-4. **Sentiment & Tone:** Describe the emotional tone.
-5. **Final Verdict:** Based on >30% likelihood of falsehood conclude FALSE, otherwise TRUE. 
-6. **Resource List:** List each evidence source's URL.
+1. Factual Verification: Check accuracy.
+2. Motivation Analysis: What does the speaker gain?
+3. Intent & Framing: Why are statements framed this way?
+4. Sentiment & Tone: Emotional tone.
+5. Final Verdict: If falsehood >30%, final answer = FALSE, else TRUE.
+6. Sources: List URLs.
 
 TRANSCRIPT:
 """${transcript}"""
@@ -621,73 +620,59 @@ TRANSCRIPT:
 WEB EVIDENCE:
 ${evidenceBlock}
 
-Respond in numbered sections matching the above tasks.`;
+Respond in numbered sections.`;
 
-    // 4️⃣ Call Gemini
+    // 🔍 Step 4: Send to Gemini
     const resp = await axios.post(
       GEMINI_URL,
       { contents: [{ parts: [{ text: prompt.trim() }] }] },
       {
         params: { key: GEMINI_KEY },
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       }
     );
 
-    const report = resp.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "No report generated.";
+    const report =
+      resp.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+      "No report generated.";
+
     return { report, evidence: results };
+
   } catch (error) {
-    logger.error('Fact-checking failed:', error.message);
-    
-    if (error.response?.status === 400) {
-      return { 
-        report: "Invalid request to fact-checking service. Please check your statement.", 
-        evidence: [] 
-      };
-    } else if (error.response?.status === 401) {
-      return { 
-        report: "Fact-checking service authentication failed. Please check API key configuration.", 
-        evidence: [] 
-      };
-    } else if (error.response?.status === 429) {
-      return { 
-        report: "Fact-checking service rate limit exceeded. Please try again later.", 
-        evidence: [] 
-      };
-    }
-    
-    return { 
-      report: "Fact-checking failed due to an error. Please try again later.", 
-      evidence: [] 
+    console.error("Fact-check error:", error.message || error);
+    return {
+      report: "Fact-checking failed. Please try again.",
+      evidence: []
     };
   }
 }
 
-// Fact-checking endpoint
+// -----------------------------------------------------
+// FACT-CHECK API ENDPOINT
+// -----------------------------------------------------
 app.post('/api/fact-check', async (req, res) => {
   try {
     const { statement } = req.body;
-    
-    if (!statement || typeof statement !== 'string') {
+
+    if (!statement || typeof statement !== "string") {
       return res.status(400).json({
         success: false,
-        error: 'Valid statement text is required'
+        error: "Valid statement text is required."
       });
     }
 
-    logger.info('Starting fact-check analysis', { statement: statement.substring(0, 100) + '...' });
-    
+    logger.info("Starting fact-check...", { statement: statement.substring(0, 200) });
+
     const result = await factCheckTranscript(statement);
-    
+
     res.json({
       success: true,
       result
     });
+
   } catch (err) {
-    logger.errorWithContext('Fact-check failed', err, { route: '/api/fact-check' });
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
+    logger.errorWithContext("Fact-check failed", err, { route: "/api/fact-check" });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -697,7 +682,7 @@ app.post('/api/chat', async (req, res) => {
     console.log('--- /api/chat REQUEST RECEIVED ---');
     const { transcript, question, creator, guest } = req.body;
     console.log("Received chat request:", { transcriptLength: transcript ? transcript.length : 0, question, creator, guest });
-    
+
     if (!transcript || !question) {
       return res.status(400).json({ 
         success: false,
@@ -719,7 +704,6 @@ app.post('/api/chat', async (req, res) => {
       guest
     });
 
-    // Create a more contextual prompt with creator and guest information
     const prompt = `You are Echo3AI, an intelligent assistant helping users understand podcast content. 
 
 Podcast Information:
@@ -730,11 +714,9 @@ Podcast Information:
 User question: ${question}
 
 Please provide a helpful, accurate response based on the transcript content. If the question is about the creator or guest, use their names when referring to them. Be conversational and engaging while staying true to the content discussed in the podcast.`;
-    
-console.log("gemini 3 is here");
-console.log("GEMINI_KEY", GEMINI_KEY);
+
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
+      GEMINI_URL,
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
@@ -744,12 +726,8 @@ console.log("GEMINI_KEY", GEMINI_KEY);
       }
     );
 
-    console.log('--- /api/chat GEMINI RESPONSE RECEIVED ---', geminiRes.data);
-    
     const answer = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer generated.';
-    console.log('--- /api/chat RESPONSE GENERATED ---', { answerLength: answer.length });
-    console.log(answer);
-    
+
     logger.info('Chat response generated successfully', { 
       answerLength: answer.length,
       preview: answer.substring(0, 100) + '...'
@@ -763,25 +741,13 @@ console.log("GEMINI_KEY", GEMINI_KEY);
     logger.errorWithContext('Chat failed', err, { route: '/api/chat' });
     
     if (err.response?.status === 400) {
-      res.status(400).json({ 
-        success: false,
-        error: 'Invalid request to chat service. Please check your question.' 
-      });
+      res.status(400).json({ success: false, error: 'Invalid request to chat service. Please check your question.' });
     } else if (err.response?.status === 401) {
-      res.status(401).json({ 
-        success: false,
-        error: 'Chat service authentication failed. Please check API key configuration.' 
-      });
+      res.status(401).json({ success: false, error: 'Chat service authentication failed. Please check API key configuration.' });
     } else if (err.response?.status === 429) {
-      res.status(429).json({ 
-        success: false,
-        error: 'Chat service rate limit exceeded. Please try again later.' 
-      });
+      res.status(429).json({ success: false, error: 'Chat service rate limit exceeded. Please try again later.' });
     } else {
-      res.status(500).json({ 
-        success: false,
-        error: 'Failed to get response from chat service.' 
-      });
+      res.status(500).json({ success: false, error: 'Failed to get response from chat service.' });
     }
   }
 });
@@ -863,7 +829,7 @@ Please provide a detailed language analysis in the following format:
 IMPORTANT: Always provide a complete analysis. If no inappropriate language is found, explicitly state that no bad language was detected. Never leave any section empty.`;
 
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
+      GEMINI_URL,
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
@@ -984,7 +950,7 @@ app.post('/api/transcribe', upload.single('video'), async (req, res) => {
     }
 
     if (!transcriptionEnabled) {
-      fs.unlinkSync(req.file.path);
+      try { fs.unlinkSync(req.file.path); } catch {}
       return res.status(503).json({
         success: false,
         error: 'Transcription service disabled',
@@ -994,7 +960,7 @@ app.post('/api/transcribe', upload.single('video'), async (req, res) => {
 
     const videoPath = req.file.path;
     const { transcript, error } = await runTranscription(videoPath);
-    fs.unlinkSync(videoPath);
+    try { fs.unlinkSync(videoPath); } catch {}
 
     if (error) {
       return res.status(500).json({
@@ -1064,7 +1030,6 @@ app.listen(PORT, async () => {
   console.log(`--- SERVER STARTED ON PORT ${PORT} ---`);
   logger.info(`🚀 Echo3AI Backend Server running on port ${PORT}`);
   logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  //logger.info(`🔗 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
   
   try {
     console.log('--- INITIALIZING ETHEREUM ---');
@@ -1078,10 +1043,3 @@ app.listen(PORT, async () => {
     logger.error('❌ Failed to initialize Ethereum Sepolia testnet:', error);
   }
 });
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-});
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
-}); 

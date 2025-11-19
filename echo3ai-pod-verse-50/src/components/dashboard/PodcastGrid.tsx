@@ -31,7 +31,7 @@ const PodcastGrid: React.FC<PodcastGridProps> = ({ searchQuery }) => {
   const fetchPodcasts = async () => {
     setLoading(true);
     try {
-      const res = await fetch('https://echo3ai-updated-3.onrender.com/api/podcasts');
+      const res = await fetch('https://echo3ai-updated-3.onrender.com /api/podcasts');
       const data = await res.json();
       setPodcasts(Array.isArray(data.podcasts) ? data.podcasts : []);
       setDisplayedPodcasts(Array.isArray(data.podcasts) ? data.podcasts : []);
