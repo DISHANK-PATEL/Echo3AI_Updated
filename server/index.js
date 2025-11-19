@@ -90,6 +90,7 @@ app.use(cors({
     'https://echo3ai-updated-3.vercel.app',
     'https://echo3ai-updated-3.onrender.com',
     'https://echo3-ai-updated-buqvjccqg-dishanks-projects-ceb029e7.vercel.app',
+    // 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
     'https://echo3-ai-updated-vg5f.vercel.app', // NEW FINAL FRONTEND
     // Add any additional frontend URLs here as needed
   ],
@@ -515,7 +516,7 @@ app.get("/api/videos/:id", async (req, res) => {
 });
 
 // Fact-checking functionality
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_KEY) {
@@ -693,7 +694,9 @@ app.post('/api/fact-check', async (req, res) => {
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
   try {
+    console.log('--- /api/chat REQUEST RECEIVED ---');
     const { transcript, question, creator, guest } = req.body;
+    console.log("Received chat request:", { transcriptLength: transcript ? transcript.length : 0, question, creator, guest });
     
     if (!transcript || !question) {
       return res.status(400).json({ 
@@ -731,7 +734,7 @@ Please provide a helpful, accurate response based on the transcript content. If 
 console.log("gemini 3 is here");
 console.log("GEMINI_KEY", GEMINI_KEY);
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
@@ -740,8 +743,12 @@ console.log("GEMINI_KEY", GEMINI_KEY);
         headers: { 'Content-Type': 'application/json' }
       }
     );
+
+    console.log('--- /api/chat GEMINI RESPONSE RECEIVED ---', geminiRes.data);
     
     const answer = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer generated.';
+    console.log('--- /api/chat RESPONSE GENERATED ---', { answerLength: answer.length });
+    console.log(answer);
     
     logger.info('Chat response generated successfully', { 
       answerLength: answer.length,
@@ -856,7 +863,7 @@ Please provide a detailed language analysis in the following format:
 IMPORTANT: Always provide a complete analysis. If no inappropriate language is found, explicitly state that no bad language was detected. Never leave any section empty.`;
 
     const geminiRes = await axios.post(
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',
       {
         contents: [{ parts: [{ text: prompt }] }]
       },
