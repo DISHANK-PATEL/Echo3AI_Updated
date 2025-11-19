@@ -608,7 +608,7 @@ async function factCheckTranscript(transcript) {
 You are a veteran investigative fact-checker. Given the transcript below, perform:
 
 1. Factual Verification: Check accuracy.
-2. Motivation Analysis: What does the speaker gain?
+2. Motivation Analysis: What does the speaker gain? Think economically, politically, socially.
 3. Intent & Framing: Why are statements framed this way?
 4. Sentiment & Tone: Emotional tone.
 5. Final Verdict: If falsehood >30%, final answer = FALSE, else TRUE.

@@ -34,7 +34,7 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
       
       // First, fetch the transcript
       console.log('Fetching transcript...');
-      const transcriptResponse = await fetch(`https://echo3ai-updated-3.onrender.com /api/podcasts/${podcast._id}/transcript`);
+      const transcriptResponse = await fetch(`https://echo3ai-updated-3.onrender.com/api/podcasts/${podcast._id}/transcript`);
       console.log('Transcript response status:', transcriptResponse.status);
       
       const transcriptResult = await transcriptResponse.json();
@@ -50,7 +50,7 @@ const LanguageCheckModal: React.FC<LanguageCheckModalProps> = ({ isOpen, onClose
 
       // Then, perform language analysis
       console.log('Performing language analysis...');
-      const analysisResponse = await fetch('https://echo3ai-updated-3.onrender.com /api/language-check', {
+      const analysisResponse = await fetch('https://echo3ai-updated-3.onrender.com/api/language-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

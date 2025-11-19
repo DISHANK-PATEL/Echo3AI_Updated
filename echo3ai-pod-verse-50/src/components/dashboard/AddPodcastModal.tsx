@@ -82,7 +82,7 @@ const AddPodcastModal = () => {
     try {
       console.log('Starting upload...', { filename: file.name, size: file.size });
       
-      const res = await fetch("https://echo3ai-updated-3.onrender.com /api/upload", {
+      const res = await fetch("https://echo3ai-updated-3.onrender.com/api/upload", {
         method: "POST",
         body: data,
       });
@@ -170,7 +170,7 @@ const AddPodcastModal = () => {
     
     setIsPublishing(true);
     try {
-      const res = await fetch(`https://echo3ai-updated-3.onrender.com /api/podcasts/${uploadedPodcast._id}/publish`, {
+      const res = await fetch(`https://echo3ai-updated-3.onrender.com/api/podcasts/${uploadedPodcast._id}/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

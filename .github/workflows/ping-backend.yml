@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render backend health endpoint
-        run: curl -s https://echo3ai-updated-3.onrender.com /health 
+        run: curl -s https://echo3ai-updated-3.onrender.com/health 

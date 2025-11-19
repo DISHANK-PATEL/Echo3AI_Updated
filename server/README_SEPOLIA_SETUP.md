@@ -112,7 +112,7 @@ npm run dev
 
 ```bash
 # Get nonce
-curl https://echo3ai-updated-3.onrender.com /auth/nonce
+curl https://echo3ai-updated-3.onrender.com/auth/nonce
 
 # Login with MetaMask (requires frontend integration)
 # This will be handled by your frontend application
@@ -122,17 +122,17 @@ curl https://echo3ai-updated-3.onrender.com /auth/nonce
 
 ```bash
 # Get contract info
-curl https://echo3ai-updated-3.onrender.com /api/contract-info
+curl https://echo3ai-updated-3.onrender.com/api/contract-info
 
 # Get contract stats
-curl https://echo3ai-updated-3.onrender.com /api/stats
+curl https://echo3ai-updated-3.onrender.com/api/stats
 ```
 
 ### 3. Test Tipping (requires authentication)
 
 ```bash
 # Send a tip (requires MetaMask authentication)
-curl -X POST https://echo3ai-updated-3.onrender.com /api/tip \
+curl -X POST https://echo3ai-updated-3.onrender.com/api/tip \
   -H "Content-Type: application/json" \
   -H "Cookie: your-session-cookie" \
   -d '{
