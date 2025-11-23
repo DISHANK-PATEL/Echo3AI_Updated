@@ -1,6 +1,5 @@
 // index.js - Cleaned & Fixed version
 console.log('--- SERVER INDEX.JS STARTED ---');
-
 process.on('uncaughtException', (err) => {
   console.error('=== UNCAUGHT EXCEPTION ===');
   console.error('Error:', err.message);
